@@ -6,7 +6,7 @@ Declarative framework for building terminal interfaces in Go with components, st
 [![Go 1.22+](https://img.shields.io/badge/Go-1.22%2B-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-![OmniTUI example with styled components](docs/assets/styled.png)
+![OmniTUI example with styled components](docs/assets/kitchen-sink.jpeg)
 
 OmniTUI turns the interface into a tree of immutable elements. The runtime preserves component state, computes layout, handles events, and sends only changed cells to the terminal.
 
@@ -116,7 +116,6 @@ go run .
 
 | Example | Demonstrates | Run |
 |---|---|---|
-| [Kitchen sink](examples/kitchen-sink/main.go) | Every builtin component and a broad style/rendering showcase | `go run ./examples/kitchen-sink` |
 | [Styled components](examples/styled/main.go) | Colors, borders, focus, input, button, and tabs | `go run ./examples/styled` |
 | [Tabs](examples/tabs/main.go) | Controlled selection and keyboard navigation | `go run ./examples/tabs` |
 | [Catalog](examples/catalog/main.go) | Controlled list, selection, and scrolling | `go run ./examples/catalog` |
