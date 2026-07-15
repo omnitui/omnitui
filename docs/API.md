@@ -1,8 +1,8 @@
-# OmniTUI — referência da API pública
+# OmniTUI — public API reference
 
-Este documento é a fonte canônica da API pública do framework. A arquitetura interna está em [DESIGN.md](DESIGN.md), os exemplos completos dos builtins em [COMPONENTS.md](COMPONENTS.md) e a organização do código em [STRUCTURE.md](STRUCTURE.md).
+This document is the canonical source for the framework’s public API. Internal architecture is described in [DESIGN.md](DESIGN.md), complete builtin examples are in [COMPONENTS.md](COMPONENTS.md), and code organization is in [STRUCTURE.md](STRUCTURE.md).
 
-## 1. Pacotes públicos
+## 1. Public packages
 
 ```go
 import (
@@ -11,18 +11,18 @@ import (
 )
 ```
 
-- `omnitui`: elementos, componentes, estado, contexto, runtime, eventos, geometria e estilos.
-- `omnitui/components`: `Box`, `Row`, `Column`, `Text`, `Button`, `Input`, `Tabs` e `List`.
+- `omnitui`: elements, components, state, context, runtime, events, geometry, and styles.
+- `omnitui/components`: `Box`, `Row`, `Column`, `Text`, `Button`, `Input`, `Tabs`, and `List`.
 
-O caminho `github.com/viniciusfonseca/omnitui` é provisório até a definição do módulo em `go.mod`.
+The module path is `github.com/viniciusfonseca/omnitui`, as defined in `go.mod`.
 
-## 2. Elementos e componentes — `omnitui`
+## 2. Elements and components — `omnitui`
 
-### `Element` e filhos
+### `Element` and children
 
 ```go
 type Element struct {
-    // representação opaca
+    // opaque representation
 }
 
 type Children []Element
@@ -32,13 +32,13 @@ func None() Element
 func Fragment(children ...Element) Element
 ```
 
-- `Element` é uma descrição imutável e barata da interface.
-- `WithKey` retorna uma cópia; a chave deve ser única somente entre irmãos.
-- `None` representa ausência de conteúdo.
-- `Fragment` agrupa vários filhos sem criar uma caixa de layout.
-- O valor zero de `Element` é equivalente a `None`.
+- `Element` is a cheap, immutable description of the interface.
+- `WithKey` returns a copy; a key must be unique only among siblings.
+- `None` represents the absence of content.
+- `Fragment` groups multiple children without creating a layout box.
+- The zero value of `Element` is equivalent to `None`.
 
-### Definição de componente
+### Component definition
 
 ```go
 type Component[P, S any] interface {
@@ -47,7 +47,7 @@ type Component[P, S any] interface {
 }
 
 type ComponentType[P any] struct {
-    // identidade opaca e estável
+    // opaque, stable identity
 }
 
 func Define[P, S any](name string, component Component[P, S]) ComponentType[P]
@@ -59,16 +59,16 @@ func Create[P any](
 ) Element
 ```
 
-Regras:
+Rules:
 
-- o valor passado a `Define` não deve guardar estado mutável;
-- cada ocorrência montada de `ComponentType` possui estado independente;
-- props e filhos são substituídos pelo render mais recente;
-- `Render` deve ser determinístico para as mesmas entradas e não pode atualizar estado;
-- múltiplos filhos de saída devem ser envolvidos em `Fragment` ou em um container;
-- tipo, posição e chave determinam se uma instância será preservada.
+- the value passed to `Define` must not hold mutable state;
+- each mounted occurrence of a `ComponentType` has independent state;
+- props and children are replaced by the most recent render;
+- `Render` must be deterministic for the same inputs and may not update state;
+- multiple output children must be wrapped in `Fragment` or a container;
+- type, position, and key determine whether an instance is preserved.
 
-## 3. Estado — `omnitui`
+## 3. State — `omnitui`
 
 ```go
 func SetState[S any](ctx Context, next S)
@@ -79,22 +79,22 @@ func UpdateState[S any](
 )
 ```
 
-- `SetState` substitui o estado atual.
-- `UpdateState` é preferido quando o próximo valor depende do anterior.
-- Atualizações são enfileiradas, aplicadas em ordem e agrupadas em um único frame quando possível.
-- É seguro chamar essas funções de outra goroutine; somente o runtime aplica a mutação.
-- Atualizações para uma instância desmontada são ignoradas.
-- Tipo incorreto ou atualização durante `Render` é erro de programação.
+- `SetState` replaces the current state.
+- `UpdateState` is preferred when the next value depends on the previous one.
+- Updates are queued, applied in order, and grouped into a single frame when possible.
+- It is safe to call these functions from another goroutine; only the runtime applies the mutation.
+- Updates for an unmounted instance are ignored.
+- An incorrect type or an update during `Render` is a programming error.
 
-## 4. Contexto — `omnitui`
+## 4. Context — `omnitui`
 
 ```go
 type Context struct {
-    // instância atual, dispatcher e valores herdados
+    // current instance, dispatcher, and inherited values
 }
 
 type ContextKey[T any] struct {
-    // identidade e valor padrão
+    // identity and default value
 }
 
 func NewContext[T any](defaultValue T) ContextKey[T]
@@ -102,7 +102,7 @@ func UseContext[T any](ctx Context, key ContextKey[T]) T
 func Provide[T any](key ContextKey[T], value T, child Element) Element
 ```
 
-`Context` é o contexto de render do framework e não substitui `context.Context`. Providers usam escopo de árvore: o valor mais próximo vence e não vaza para irmãos.
+`Context` is the framework’s render context and does not replace `context.Context`. Providers use tree scope: the nearest value wins and does not leak to siblings.
 
 ## 5. Runtime — `omnitui`
 
@@ -132,25 +132,25 @@ func (app *App) UpdateRoot(root Element)
 func (app *App) Dispatch(message any)
 ```
 
-- `Input` e `Output` usam o terminal atual quando omitidos.
-- `ColorProfileAuto` detecta a melhor capacidade disponível; uma opção explícita torna testes e ambientes remotos previsíveis.
-- `Run` assume posse do terminal até retornar e restaura seu estado em sucesso, cancelamento, erro ou panic.
-- `UpdateRoot` e `Dispatch` apenas publicam trabalho na fila e podem ser chamados por outras goroutines.
-- `Dispatch(value)` gera `MessageEvent` no nó host raiz.
+- `Input` and `Output` use the current terminal when omitted.
+- `ColorProfileAuto` detects the best available capability; an explicit option makes tests and remote environments predictable.
+- `Run` owns the terminal until it returns and restores its state on success, cancellation, error, or panic.
+- `UpdateRoot` and `Dispatch` only publish work to the queue and may be called from other goroutines.
+- `Dispatch(value)` produces a `MessageEvent` at the root host node.
 
-Erro público do MVP:
+Public MVP error:
 
 ```go
 var ErrInterrupted = errors.New("omnitui: interrupted")
 ```
 
-`Run` retorna `ErrInterrupted` quando `Ctrl+C` não é consumido.
+`Run` returns `ErrInterrupted` when `Ctrl+C` is not consumed.
 
-## 6. Geometria — `omnitui`
+## 6. Geometry — `omnitui`
 
 ```go
 type Size struct {
-    // modo e valor opacos
+    // opaque mode and value
 }
 
 func Auto() Size
@@ -168,17 +168,17 @@ type Rect struct {
 }
 ```
 
-- O valor zero de `Size` equivale a `Auto()`.
-- Tamanhos e espaçamentos negativos são inválidos.
-- Percentuais e unidades flexíveis não fazem parte do MVP.
+- The zero value of `Size` is equivalent to `Auto()`.
+- Negative sizes and spacing are invalid.
+- Percentages and flexible units are not part of the MVP.
 
-## 7. Estilos — `omnitui`
+## 7. Styles — `omnitui`
 
-### Cores
+### Colors
 
 ```go
 type Color struct {
-    // kind e canais opacos
+    // opaque kind and channels
 }
 
 type ANSIColor uint8
@@ -208,19 +208,19 @@ func Indexed(index uint8) Color
 func RGB(red, green, blue uint8) Color
 ```
 
-O valor zero de `Color` significa **não especificado** e herda a cor resolvida do pai. `DefaultColor()` é diferente: ele solicita explicitamente a cor padrão do terminal e interrompe a herança.
+The zero value of `Color` means **unspecified** and inherits the parent’s resolved color. `DefaultColor()` is different: it explicitly requests the terminal’s default color and stops inheritance.
 
-Perfis suportados:
+Supported profiles:
 
-| Perfil | Cores |
+| Profile | Colors |
 |---|---:|
 | `ColorProfileANSI16` | 16 cores ANSI |
 | `ColorProfileANSI256` | paleta indexada de 256 cores |
 | `ColorProfileTrueColor` | RGB de 24 bits |
 
-Quando uma cor excede o perfil ativo, o renderer escolhe a entrada visualmente mais próxima da paleta disponível. Alpha, gradientes e mistura de cores não são suportados.
+When a color exceeds the active profile, the renderer chooses the visually closest entry in the available palette. Alpha, gradients, and color blending are not supported.
 
-### Atributos de texto
+### Text attributes
 
 ```go
 type AttributeMask uint16
@@ -244,29 +244,29 @@ type Style struct {
 }
 ```
 
-| Atributo | Efeito esperado | Observação |
+| Attribute | Expected effect | Notes |
 |---|---|---|
-| `Bold` | Intensidade forte | Pode selecionar cor brilhante em terminais antigos |
-| `Dim` | Intensidade reduzida | Nem todo terminal distingue de cor normal |
-| `Italic` | Texto inclinado | Pode ser ignorado pelo terminal |
-| `Underline` | Sublinhado simples | Suporte amplo |
-| `Blink` | Texto piscante | Frequentemente desabilitado pelo terminal |
-| `Reverse` | Troca foreground e background | Suporte amplo |
-| `Hidden` | Oculta o conteúdo visual | As células continuam ocupando layout |
-| `Strikethrough` | Texto riscado | Pode ser ignorado pelo terminal |
+| `Bold` | Strong intensity | May select a bright color on older terminals |
+| `Dim` | Reduced intensity | Not every terminal distinguishes it from normal color |
+| `Italic` | Slanted text | May be ignored by the terminal |
+| `Underline` | Simple underline | Widely supported |
+| `Blink` | Blinking text | Frequently disabled by terminals |
+| `Reverse` | Swaps foreground and background | Widely supported |
+| `Hidden` | Hides visual content | Cells still occupy layout space |
+| `Strikethrough` | Struck-through text | May be ignored by the terminal |
 
-O framework emite os códigos SGR correspondentes, mas não simula visualmente atributos que o terminal ignora. `DoubleUnderline`, `Overline`, hyperlinks, fontes e velocidade de blink ficam fora do MVP.
+The framework emits the corresponding SGR codes but does not visually simulate attributes ignored by the terminal. `DoubleUnderline`, `Overline`, hyperlinks, fonts, and blink speed are outside the MVP.
 
-### Herança e composição
+### Inheritance and composition
 
-Para resolver o estilo de um nó:
+To resolve a node’s style:
 
-1. começar pelo estilo resolvido do pai;
-2. substituir foreground/background quando a cor não for zero;
-3. remover os bits de `ClearAttributes`;
-4. adicionar os bits de `Attributes`.
+1. start with the parent’s resolved style;
+2. replace foreground/background when the color is non-zero;
+3. remove the `ClearAttributes` bits;
+4. add the `Attributes` bits.
 
-O mesmo bit não pode aparecer em `Attributes` e `ClearAttributes`; isso gera erro de props. O valor zero de `Style` herda integralmente o estilo do pai.
+The same bit cannot appear in `Attributes` and `ClearAttributes`; this produces a props error. The zero value of `Style` fully inherits the parent’s style.
 
 ```go
 titleStyle := omnitui.Style{
@@ -279,11 +279,11 @@ normalChild := omnitui.Style{
 }
 ```
 
-Props como `FocusStyle`, `ActiveStyle` e `SelectedStyle` são aplicadas depois de `Style`, usando as mesmas regras. Padding, gap, border, alinhamento e clipping são propriedades de componente, não atributos de `Style`.
+Props such as `FocusStyle`, `ActiveStyle`, and `SelectedStyle` are applied after `Style`, using the same rules. Padding, gap, border, alignment, and clipping are component properties, not `Style` attributes.
 
-## 8. Componentes builtin — `components`
+## 8. Builtin components — `components`
 
-### Enums compartilhados
+### Shared enums
 
 ```go
 type Direction uint8
@@ -381,7 +381,7 @@ type BoxProps struct {
 func Box(props BoxProps, children ...omnitui.Element) omnitui.Element
 ```
 
-`OnResize` e `OnMessage` só são chamados quando a `Box` é o nó host raiz. Quando diferente de `BorderNone`, `Border` ocupa uma célula em cada um dos quatro lados.
+`OnResize` and `OnMessage` are called only when the `Box` is the root host node. When different from `BorderNone`, `Border` occupies one cell on each of the four sides.
 
 ### `Row`
 
@@ -435,7 +435,7 @@ type TextProps struct {
 func Text(props TextProps) omnitui.Element
 ```
 
-`MaxLines == 0` significa sem limite. Wrap e truncamento operam sobre graphemes e largura visual.
+`MaxLines == 0` means no limit. Wrapping and truncation operate on graphemes and visual width.
 
 ### `Button`
 
@@ -457,7 +457,7 @@ type ButtonProps struct {
 func Button(props ButtonProps) omnitui.Element
 ```
 
-`Button` é focável por padrão. `Enter`, `Space` e clique esquerdo completo produzem `PressEvent` quando habilitado.
+`Button` is focusable by default. `Enter`, `Space`, and a complete left click produce `PressEvent` when enabled.
 
 ### `Input`
 
@@ -486,7 +486,7 @@ type InputProps struct {
 func Input(props InputProps) omnitui.Element
 ```
 
-`Input` é controlado por `Value`; `OnChange` apenas propõe um novo valor. `MaxLength` conta graphemes. `Mask` altera somente a pintura. Clique esquerdo posiciona o cursor no grapheme visual mais próximo.
+`Input` is controlled by `Value`; `OnChange` only proposes a new value. `MaxLength` counts graphemes. `Mask` changes painting only. A left click positions the cursor at the nearest visual grapheme.
 
 ### `Tabs`
 
@@ -510,7 +510,7 @@ type TabsProps struct {
 func Tabs(props TabsProps) omnitui.Element
 ```
 
-Chaves devem ser únicas. `ActiveKey == ""` usa a primeira aba habilitada; uma chave inexistente ou desabilitada é erro de props. Clique esquerdo em um cabeçalho propõe sua chave por `OnChange`.
+Keys must be unique. `ActiveKey == ""` uses the first enabled tab; a missing or disabled key is a props error. A left click on a header proposes its key through `OnChange`.
 
 ### `List`
 
@@ -544,11 +544,11 @@ type ListProps struct {
 func List(props ListProps, items ...omnitui.Element) omnitui.Element
 ```
 
-Cada item direto deve possuir `WithKey`. `List` é controlada por `SelectedKey`; clique esquerdo propõe o item e wheel move somente a viewport. Scroll e navegação detalhados ficam em [COMPONENTS.md](COMPONENTS.md#scroll).
+Every direct item must have `WithKey`. `List` is controlled by `SelectedKey`; a left click proposes the item and wheel input moves only the viewport. Detailed scrolling and navigation are in [COMPONENTS.md](COMPONENTS.md#scrolling).
 
-## 9. Eventos — `omnitui`
+## 9. Events — `omnitui`
 
-### Contrato dos handlers
+### Handler contract
 
 ```go
 type EventResult uint8
@@ -561,33 +561,33 @@ const (
 type EventHandler[E any] func(event E) EventResult
 ```
 
-- `Propagate` envia o evento ao próximo ancestral elegível.
-- `Consume` interrompe bubbling e impede o comportamento padrão associado.
-- Handler ausente equivale a `Propagate`.
-- Handlers rodam na goroutine do runtime e devem retornar rapidamente.
-- Eventos são valores imutáveis para o consumidor.
+- `Propagate` sends the event to the next eligible ancestor.
+- `Consume` stops bubbling and prevents the associated default behavior.
+- A missing handler is equivalent to `Propagate`.
+- Handlers run on the runtime goroutine and should return quickly.
+- Events are immutable values for consumers.
 
-Para eventos sem propagação, o retorno é ignorado, mas a assinatura permanece uniforme.
+For events without propagation, the return value is ignored, but the signature remains uniform.
 
-### Eventos suportados no MVP
+### Events supported in the MVP
 
-| Evento | Origem | Alvo inicial | Propagação |
+| Event | Source | Initial target | Propagation |
 |---|---|---|---|
-| `KeyEvent` | Tecla ou sequência ANSI | Elemento focado | Alvo até ancestrais |
-| `TextInputEvent` | Entrada imprimível normalizada | `Input` focado | Alvo até ancestrais |
-| `PasteEvent` | Bracketed paste | `Input` focado | Alvo até ancestrais |
-| `MouseEvent` | Movimento, botão, entrada ou saída do ponteiro | Host sob o ponteiro ou capturador | Alvo até ancestrais, exceto enter/leave |
-| `WheelEvent` | Roda ou gesto de scroll do terminal | Host sob o ponteiro | Alvo até ancestrais |
-| `FocusEvent` | Elemento recebe foco | Novo foco | Não propaga |
-| `BlurEvent` | Elemento perde foco | Foco anterior | Não propaga |
-| `PressEvent` | Ativação de controle | `Button` ou `Box` pressionável | Alvo até ancestrais |
-| `ValueChangeEvent` | `Input`, `Tabs` ou `List` propõe valor | Builtin emissor | Não propaga |
-| `SubmitEvent` | `Enter` em `Input` | `Input` focado | Não propaga |
-| `ActivateEvent` | `Enter` em item de `List` | `List` focada | Não propaga |
-| `ResizeEvent` | Dimensão do terminal muda | Host raiz | Não propaga |
-| `MessageEvent` | `App.Dispatch` | Host raiz | Não propaga |
+| `KeyEvent` | Key or ANSI sequence | Focused element | Target through ancestors |
+| `TextInputEvent` | Normalized printable input | Focused `Input` | Target through ancestors |
+| `PasteEvent` | Bracketed paste | Focused `Input` | Target through ancestors |
+| `MouseEvent` | Pointer movement, button, enter, or leave | Host under pointer or capture target | Target through ancestors, except enter/leave |
+| `WheelEvent` | Terminal wheel or scroll gesture | Host under pointer | Target through ancestors |
+| `FocusEvent` | Element receives focus | New focus | Does not propagate |
+| `BlurEvent` | Element loses focus | Previous focus | Does not propagate |
+| `PressEvent` | Control activation | Pressable `Button` or `Box` | Target through ancestors |
+| `ValueChangeEvent` | `Input`, `Tabs`, or `List` proposes a value | Emitting builtin | Does not propagate |
+| `SubmitEvent` | `Enter` in an `Input` | Focused `Input` | Does not propagate |
+| `ActivateEvent` | `Enter` on a `List` item | Focused `List` | Does not propagate |
+| `ResizeEvent` | Terminal dimensions change | Root host | Does not propagate |
+| `MessageEvent` | `App.Dispatch` | Root host | Does not propagate |
 
-### Teclado
+### Keyboard
 
 ```go
 type Key uint16
@@ -639,15 +639,15 @@ type KeyEvent struct {
 }
 ```
 
-Terminais não fornecem `KeyUp` de forma portátil. Modificadores e repetição só são reportados quando distinguíveis na entrada recebida.
+Terminals do not provide portable `KeyUp` events. Modifiers and repetition are reported only when distinguishable in the received input.
 
-Comportamentos padrão após um `KeyEvent` não consumido:
+Default behavior after an unconsumed `KeyEvent`:
 
-- `Tab` e `Backtab` movem o foco;
-- `Enter` e `Space` geram `PressEvent` em controles pressionáveis;
-- `Ctrl+C` encerra `Run` com `ErrInterrupted`.
+- `Tab` and `Backtab` move focus;
+- `Enter` and `Space` generate `PressEvent` on pressable controls;
+- `Ctrl+C` exits `Run` with `ErrInterrupted`.
 
-### Foco
+### Focus
 
 ```go
 type FocusCause uint8
@@ -668,7 +668,7 @@ type BlurEvent struct {
 }
 ```
 
-`FocusEvent` e `BlurEvent` não propagam.
+`FocusEvent` and `BlurEvent` do not propagate.
 
 ### Press
 
@@ -687,9 +687,9 @@ type PressEvent struct {
 }
 ```
 
-Controles desabilitados não recebem nem propagam `PressEvent`.
+Disabled controls neither receive nor propagate `PressEvent`.
 
-### Mouse e wheel
+### Mouse and wheel
 
 ```go
 type MouseAction uint8
@@ -739,28 +739,28 @@ type WheelEvent struct {
 }
 ```
 
-- Coordenadas são zero-based; `X`/`Y` são relativas à tela. O runtime entrega uma cópia por handler com `LocalX`/`LocalY` relativos ao nó cujo handler está em execução, inclusive durante bubbling.
-- `MouseMove`, `MouseDown`, `MouseUp` e `WheelEvent` propagam do alvo aos ancestrais.
-- `MouseEnter` e `MouseLeave` são derivados comparando os caminhos de ancestrais. Cada nó que entrou ou saiu recebe seu próprio evento, sem bubbling; assim, uma `Box` detecta hover mesmo quando um filho é o alvo mais profundo.
-- `Buttons` descreve os botões mantidos pressionados durante move; `Button` identifica o botão que mudou em down/up.
-- `DeltaY < 0` rola para cima e `DeltaY > 0` para baixo; `DeltaX < 0` rola para a esquerda e `DeltaX > 0` para a direita.
-- O backend normaliza wheel em linhas lógicas; a magnitude pode ser maior que 1 quando o terminal reportar vários passos.
+- Coordinates are zero-based; `X`/`Y` are screen-relative. The runtime gives each handler a copy with `LocalX`/`LocalY` relative to the node whose handler is running, including during bubbling.
+- `MouseMove`, `MouseDown`, `MouseUp`, and `WheelEvent` propagate from the target to its ancestors.
+- `MouseEnter` and `MouseLeave` are derived by comparing ancestor paths. Each node that was entered or left receives its own event without bubbling; a `Box` can therefore detect hover even when a child is the deepest target.
+- `Buttons` describes buttons held during movement; `Button` identifies the button that changed on down/up.
+- `DeltaY < 0` scrolls up and `DeltaY > 0` scrolls down; `DeltaX < 0` scrolls left and `DeltaX > 0` scrolls right.
+- The backend normalizes wheel input into logical lines; the magnitude may be greater than 1 when the terminal reports multiple steps.
 
-Sem captura, hit testing percorre hosts do último pintado para o primeiro, respeita o recorte acumulado dos ancestrais e escolhe o nó visível mais profundo. O alvo não depende de a célula conter um grapheme: todo o retângulo de layout participa. Durante captura, move/up são entregues ao capturador; enter/leave continuam sendo calculados a partir do host realmente sob o ponteiro.
+Without capture, hit testing walks hosts from the last painted to the first, respects accumulated ancestor clipping, and chooses the deepest visible node. The target does not depend on a cell containing a grapheme: the entire layout rectangle participates. During capture, move/up are delivered to the capture target; enter/leave continue to be calculated from the host actually under the pointer.
 
-No `MouseDown`, o alvo recebe captura automática até o `MouseUp` correspondente. Eventos continuam chegando a ele mesmo fora de seu retângulo. A captura é cancelada se o alvo for desmontado ou desabilitado.
+On `MouseDown`, the target receives automatic capture until the corresponding `MouseUp`. Events continue reaching it even outside its rectangle. Capture is canceled if the target is unmounted or disabled.
 
-Comportamentos padrão não consumidos:
+Unconsumed default behavior:
 
-- clique esquerdo dá foco a um alvo focável;
-- down esquerdo seguido de up ainda dentro do mesmo controle pressionável gera `PressEvent{Source: MouseLeft}`;
-- clique em cabeçalho de `Tabs` propõe sua chave por `ValueChangeEvent`;
-- clique em item de `List` propõe sua seleção;
-- wheel sobre `List` desloca a viewport sem alterar `SelectedKey`.
+- a left click focuses a focusable target;
+- a left down followed by an up still inside the same pressable control generates `PressEvent{Source: MouseLeft}`;
+- a click on a `Tabs` header proposes its key through `ValueChangeEvent`;
+- a click on a `List` item proposes its selection;
+- wheel input over a `List` moves the viewport without changing `SelectedKey`.
 
-O MVP habilita o protocolo SGR extended mouse e rastreamento de movimento. Double click, triple click, drag semântico, seleção por arraste e manipulação da scrollbar ficam fora do MVP; aplicações ainda podem interpretar a sequência bruta de down/move/up.
+The MVP enables the SGR extended mouse protocol and motion tracking. Double-click, triple-click, semantic drag, drag selection, and scrollbar manipulation are outside the MVP; applications may still interpret the raw down/move/up sequence.
 
-### Texto e paste
+### Text and paste
 
 ```go
 type TextInputEvent struct {
@@ -772,9 +772,9 @@ type PasteEvent struct {
 }
 ```
 
-Para entrada imprimível, o runtime entrega `KeyEvent`, depois `TextInputEvent` e, se ambos permitirem o comportamento padrão, o `Input` propõe `ValueChangeEvent`. Paste permanece em um único evento e respeita o limite de entrada do backend.
+For printable input, the runtime delivers `KeyEvent`, then `TextInputEvent`, and, if both allow default behavior, the `Input` proposes `ValueChangeEvent`. Paste remains a single event and respects the backend’s input limit.
 
-### Mudança, submit e ativação
+### Change, submit, and activation
 
 ```go
 type ChangeSource uint8
@@ -801,9 +801,9 @@ type ActivateEvent struct {
 }
 ```
 
-`ValueChangeEvent` é uma proposta: não altera props automaticamente. `SubmitEvent` não limpa o input e `ActivateEvent` não muda a seleção.
+`ValueChangeEvent` is a proposal: it does not change props automatically. `SubmitEvent` does not clear the input, and `ActivateEvent` does not change selection.
 
-### Resize e mensagens
+### Resize and messages
 
 ```go
 type ResizeEvent struct {
@@ -816,51 +816,51 @@ type MessageEvent struct {
 }
 ```
 
-Resizes pendentes podem ser coalescidos para o tamanho mais recente. Mensagens preservam ordem e não são coalescidas.
+Pending resizes may be coalesced to the most recent size. Messages preserve order and are not coalesced.
 
-### Ordem de processamento
+### Processing order
 
-1. Normalizar a entrada do backend.
-2. Resolver o alvo por foco, raiz, captura de mouse ou hit testing.
-3. Executar o handler do alvo.
-4. Propagar enquanto o resultado for `Propagate`.
-5. Aplicar o comportamento padrão se o evento não foi consumido.
-6. Drenar atualizações de estado produzidas pelos handlers.
-7. Reconciliar e gerar no máximo um frame.
+1. Normalize backend input.
+2. Resolve the target by focus, root, mouse capture, or hit testing.
+3. Run the target handler.
+4. Propagate while the result is `Propagate`.
+5. Apply default behavior if the event was not consumed.
+6. Drain state updates produced by handlers.
+7. Reconcile and produce at most one frame.
 
-### Eventos fora do MVP
+### Events outside the MVP
 
 - `TickEvent`;
 - `KeyUp`;
-- `DoubleClickEvent` e `DragEvent` semânticos;
-- lifecycle `Mount`, `Update` e `Unmount`.
+- semantic `DoubleClickEvent` and `DragEvent`;
+- `Mount`, `Update`, and `Unmount` lifecycle.
 
-Lifecycle pertencerá à futura API de efeitos e cleanup, não ao sistema de eventos de input.
+Lifecycle will belong to a future effects and cleanup API, not the input event system.
 
-## 10. Matriz de handlers por componente
+## 10. Handler matrix by component
 
-| Componente | Handlers públicos |
+| Component | Public handlers |
 |---|---|
 | `Box` | `OnKey`, `OnTextInput`, `OnPaste`, `OnFocus`, `OnBlur`, `OnPress`, `OnMouse`, `OnWheel`, `OnResize`, `OnMessage` |
 | `Button` | `OnKey`, `OnFocus`, `OnBlur`, `OnPress`, `OnMouse` |
 | `Input` | `OnKey`, `OnTextInput`, `OnPaste`, `OnFocus`, `OnBlur`, `OnMouse`, `OnChange`, `OnSubmit` |
 | `Tabs` | `OnChange` |
 | `List` | `OnMouse`, `OnWheel`, `OnChange`, `OnActivate` |
-| `Row`, `Column`, `Text` | Nenhum handler direto |
+| `Row`, `Column`, `Text` | No direct handlers |
 
-Para tornar `Row` ou `Column` interativo, use uma `Box` configurada como focável ou crie um componente composto que renderize uma superfície interativa.
+To make `Row` or `Column` interactive, use a `Box` configured as focusable or create a composite component that renders an interactive surface.
 
-## 11. Erros de uso
+## 11. Usage errors
 
-As situações abaixo são erros de programação e devem incluir o caminho do componente:
+The following situations are programming errors and must include the component path:
 
-- chave duplicada entre irmãos;
-- tipo de estado incompatível;
-- atualização de estado durante `Render`;
-- children em componente folha;
-- props com tamanhos negativos;
-- aba ativa inexistente ou desabilitada;
-- item de `List` sem chave;
-- atributo simultaneamente presente em `Attributes` e `ClearAttributes`.
+- duplicate key among siblings;
+- incompatible state type;
+- state update during `Render`;
+- children passed to a leaf component;
+- props with negative sizes;
+- missing or disabled active tab;
+- `List` item without a key;
+- attribute present simultaneously in `Attributes` and `ClearAttributes`.
 
-Erros de I/O, cancelamento e interrupção saem de `App.Run`.
+I/O, cancellation, and interruption errors are returned by `App.Run`.

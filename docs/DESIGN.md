@@ -1,60 +1,60 @@
-# OmniTUI — plano de design
+# OmniTUI — design plan
 
-A referência pública de tipos, funções, estilos e eventos está em [API.md](API.md).
+The public reference for types, functions, styles, and events is in [API.md](API.md).
 
-## 1. Objetivo
+## 1. Goal
 
-Construir um framework TUI em Go, inspirado no modelo mental do React, no qual:
+Build a Go TUI framework inspired by the React mental model, in which:
 
-- a interface é uma árvore declarativa de elementos;
-- componentes recebem props, contexto e filhos;
-- cada instância montada de componente possui estado próprio;
-- todo componente renderiza exatamente um elemento (um `Fragment` cobre vários filhos);
-- alterações de estado disparam uma nova renderização;
-- a reconciliação preserva ou descarta estado de forma previsível;
-- o pacote público `components` inclui `Row`, `Column`, `Text`, `Input`, `Tabs` e `List` como builtins oficiais;
-- a tela é atualizada por diferença entre buffers, sem redesenhar o terminal inteiro.
+- the interface is a declarative tree of elements;
+- components receive props, context, and children;
+- every mounted component instance has its own state;
+- every component renders exactly one element (a `Fragment` covers multiple children);
+- state changes trigger a new render;
+- reconciliation preserves or discards state predictably;
+- the public `components` package includes `Row`, `Column`, `Text`, `Input`, `Tabs`, and `List` as official builtins;
+- the screen is updated by buffer diffing without redrawing the entire terminal.
 
-O primeiro marco deve provar esse modelo com uma API pequena. Hooks, efeitos, animações, renderização concorrente e uma imitação completa de CSS ficam fora do MVP.
+The first milestone must prove this model with a small API. Hooks, effects, animations, concurrent rendering, and a complete imitation of CSS are outside the MVP.
 
-## 2. Premissas e limites
+## 2. Assumptions and boundaries
 
-1. A primeira plataforma suportada será terminal Unix (Linux e macOS) com ANSI/VT100.
-2. “Do zero” significa não encapsular Bubble Tea, tview ou outro framework TUI. Utilitários pequenos e focados, como `golang.org/x/term` para modo raw e uma biblioteca de largura Unicode, são aceitáveis.
-3. Todos os renders e mutações da árvore acontecerão em uma única goroutine, controlada pelo runtime. Outras goroutines poderão apenas enfileirar mensagens.
-4. Props e elementos serão tratados como valores imutáveis. O runtime será o dono do estado montado.
-5. A primeira implementação reconciliará toda a árvore lógica após uma atualização. Otimizações por subárvore só serão adicionadas se medições justificarem.
-6. O layout inicial será um subconjunto pequeno de flexbox: linha/coluna, tamanho, padding, gap, alinhamento e clipping.
-7. Windows, IME, efeitos assíncronos e acessibilidade avançada serão extensões posteriores; mouse SGR faz parte do MVP Unix.
+1. The first supported platform will be Unix terminals (Linux and macOS) with ANSI/VT100.
+2. “From scratch” means not wrapping Bubble Tea, tview, or another TUI framework. Small, focused utilities such as `golang.org/x/term` for raw mode and a Unicode width library are acceptable.
+3. All renders and tree mutations will happen on a single runtime-controlled goroutine. Other goroutines may only enqueue messages.
+4. Props and elements are treated as immutable values. The runtime owns mounted state.
+5. The first implementation will reconcile the entire logical tree after an update. Subtree optimizations will be added only when measurements justify them.
+6. Initial layout will be a small flexbox subset: row/column direction, sizing, padding, gap, alignment, and clipping.
+7. Windows, IME, asynchronous effects, and advanced accessibility will be later extensions; SGR mouse is part of the Unix MVP.
 
-## 3. Modelo mental
+## 3. Mental model
 
-Há três representações diferentes e elas não devem ser misturadas:
+There are three different representations, and they must not be mixed:
 
 ```text
-Elementos imutáveis          Instâncias montadas          Saída física
-(o que o usuário quer)  ->   (identidade + estado)   ->   (buffer de células)
+Immutable elements           Mounted instances           Physical output
+(what the user wants)    ->  (identity + state)      ->  (cell buffer)
 
 Component / Box / Text       componentInstance            Cell[x,y]
 props / key / children       state / context / host       rune / width / style
 ```
 
-- **Elemento:** descrição barata e descartável criada durante `Render`.
-- **Instância:** objeto interno persistente enquanto tipo, posição e chave continuarem compatíveis. É aqui que o estado vive.
-- **Nó host:** resultado sem componentes de usuário, contendo somente primitivas que o layout entende.
-- **Buffer de células:** representação final da tela usada para produzir sequências ANSI mínimas.
+- **Element:** cheap, disposable description created during `Render`.
+- **Instance:** persistent internal object while type, position, and key remain compatible. This is where state lives.
+- **Host node:** result with user components removed, containing only primitives understood by layout.
+- **Cell buffer:** final screen representation used to produce minimal ANSI sequences.
 
-Essa separação evita guardar estado dentro de `Element`, que é recriado em cada render, e evita acoplar componentes diretamente ao terminal.
+This separation avoids storing state inside `Element`, which is recreated on every render, and avoids coupling components directly to the terminal.
 
-## 4. API pública
+## 4. Public API
 
-A referência canônica dos pacotes `omnitui` e `omnitui/components` está em [API.md](API.md). Ela contém elementos, componentes, estado, contexto, runtime, geometria, estilos, builtins e eventos suportados.
+The canonical reference for the `omnitui` and `omnitui/components` packages is in [API.md](API.md). It contains supported elements, components, state, context, runtime, geometry, styles, builtins, and events.
 
-Este documento conserva apenas decisões arquiteturais e exemplos que ajudam a explicar o modelo.
+This document keeps only architectural decisions and examples that help explain the model.
 
-## 5. Exemplo de uso desejado
+## 5. Intended usage example
 
-O exemplo assume `omnitui` como nome do pacote raiz e `components` como nome do pacote `omnitui/components`.
+The example assumes `omnitui` as the root package name and `components` as the name of the `omnitui/components` package.
 
 ```go
 type CounterProps struct {
@@ -83,7 +83,7 @@ func (Counter) Render(
             Content: fmt.Sprintf("%s: %d", props.Label, state.Value),
         }),
         components.Button(components.ButtonProps{
-            Label: "Incrementar",
+            Label: "Increment",
             OnPress: func(event omnitui.PressEvent) omnitui.EventResult {
                 omnitui.UpdateState(ctx, func(current CounterState) CounterState {
                     current.Value++
@@ -100,42 +100,42 @@ var CounterType = omnitui.Define[CounterProps, CounterState]("Counter", Counter{
 
 root := omnitui.Create(
     CounterType,
-    CounterProps{Label: "Cliques"},
+    CounterProps{Label: "Clicks"},
     components.Text(components.TextProps{
-        Content: "Filho recebido pelo componente",
+        Content: "Child received by the component",
     }),
 )
 ```
 
-Esse exemplo define o contrato mínimo que os primeiros testes de integração devem tornar possível.
+This example defines the minimum contract that the first integration tests must make possible.
 
-## 6. Reconciliação e identidade
+## 6. Reconciliation and identity
 
-Ao receber uma nova árvore de elementos, o reconciliador compara cada elemento novo com a instância montada anterior:
+When it receives a new element tree, the reconciler compares each new element with the previous mounted instance:
 
-1. Se tipo e chave forem compatíveis, reutiliza a instância e seu estado.
-2. Se tipo ou chave mudarem, desmonta a instância anterior e monta uma nova com `InitialState`.
-3. Sem chave, identidade é determinada pela posição entre irmãos.
-4. Com chave, a busca acontece no conjunto de irmãos e permite reordenação sem perder estado.
-5. Chaves duplicadas entre irmãos geram erro com o caminho da árvore.
-6. Props e filhos sempre são substituídos pelos valores do render mais recente.
+1. If type and key are compatible, reuse the instance and its state.
+2. If type or key changes, unmount the previous instance and mount a new one with `InitialState`.
+3. Without a key, identity is determined by position among siblings.
+4. With a key, lookup happens among siblings and allows reordering without losing state.
+5. Duplicate keys among siblings produce an error with the tree path.
+6. Props and children are always replaced with the values from the most recent render.
 
-Para uma instância de componente reutilizada:
+For a reused component instance:
 
-1. aplicar atualizações de estado pendentes;
-2. construir o contexto herdado;
-3. chamar `Render` com props, estado e filhos atuais;
-4. reconciliar o elemento retornado com a subárvore anterior.
+1. apply pending state updates;
+2. build inherited context;
+3. call `Render` with current props, state, and children;
+4. reconcile the returned element with the previous subtree.
 
-Para um nó host reutilizado:
+For a reused host node:
 
-1. atualizar props;
-2. reconciliar filhos;
-3. produzir ou atualizar o nó usado pelo layout.
+1. update props;
+2. reconcile children;
+3. produce or update the node used by layout.
 
-O MVP não terá lifecycle público. Internamente, a desmontagem invalida o dispatcher da instância e remove seus handlers/foco. Uma API de cleanup só deve nascer junto com efeitos assíncronos, em uma fase posterior.
+The MVP will have no public lifecycle. Internally, unmounting invalidates the instance dispatcher and removes its handlers/focus. A cleanup API should only be introduced together with asynchronous effects in a later phase.
 
-### Pseudocódigo
+### Pseudocode
 
 ```text
 reconcile(parent, oldInstance, newElement, inheritedContext):
@@ -164,34 +164,34 @@ reconcile(parent, oldInstance, newElement, inheritedContext):
     return oldInstance
 ```
 
-## 7. Pipeline de renderização
+## 7. Rendering pipeline
 
 ```text
 input / resize / SetState
           |
           v
-      fila do runtime -- agrupa atualizações
+      runtime queue -- batches updates
           |
           v
-  render + reconciliação -- preserva identidade e estado
+  render + reconciliation -- preserves identity and state
           |
           v
-      árvore host -- somente Box, Text e hosts internos de interação
+      host tree -- only Box, Text, and internal interaction hosts
           |
           v
-        layout -- posições, tamanhos e clipping
+        layout -- positions, sizes, and clipping
           |
           v
-         paint -- buffer traseiro de Cell
+         paint -- back buffer of Cells
           |
           v
-     diff de buffers -- sequências ANSI para células alteradas
+     buffer diff -- ANSI sequences for changed cells
           |
           v
         terminal
 ```
 
-### Buffer de tela
+### Screen buffer
 
 ```go
 type Cell struct {
@@ -201,26 +201,26 @@ type Cell struct {
 }
 ```
 
-O renderer mantém buffer frontal e traseiro. Depois do paint, ele agrupa células alteradas por linha, reduz movimentos de cursor e só emite mudanças de estilo quando necessário. Ao final, troca os buffers.
+The renderer maintains front and back buffers. After painting, it groups changed cells by row, reduces cursor movements, and emits style changes only when necessary. It swaps the buffers at the end.
 
-Unicode exige tratar largura visual, caracteres combinantes e células de continuação. Isso deve ser coberto desde a primeira versão do buffer, mesmo que o parser de entrada comece apenas com teclado básico.
+Unicode requires handling visual width, combining characters, and continuation cells. This must be covered from the first buffer version, even if the input parser initially supports only basic keyboard input.
 
-## 8. Layout, estilo e componentes builtin
+## 8. Layout, styles, and builtin components
 
-### 8.1 Catálogo de componentes
+### 8.1 Component catalog
 
-O pacote `omnitui/components` entregará `Row`, `Column`, `Text`, `Input`, `Tabs` e `List` como builtins oficiais. Seus contratos, props, comportamentos e exemplos de utilização ficam em [COMPONENTS.md](COMPONENTS.md).
+The `omnitui/components` package provides `Row`, `Column`, `Text`, `Input`, `Tabs`, and `List` as official builtins. Their contracts, props, behavior, and usage examples are in [COMPONENTS.md](COMPONENTS.md).
 
-`Box` e `Button` permanecem no mesmo pacote como blocos visuais de nível mais baixo; `Fragment` e `None` pertencem ao núcleo `omnitui`. `Box` e `Text` criam hosts por meio da fronteira opaca `internal/core`; os demais builtins usam a mesma API de `Component` disponível aos usuários. `Input` usa um host interno não exportado para cursor e edição.
+`Box` and `Button` remain in the same package as lower-level visual building blocks; `Fragment` and `None` belong to the `omnitui` core. `Box` and `Text` create hosts through the opaque `internal/core` boundary; the other builtins use the same `Component` API available to users. `Input` uses an unexported internal host for cursor and editing.
 
-### 8.2 Motor de layout
+### 8.2 Layout engine
 
-O algoritmo terá duas passagens:
+The algorithm has two passes:
 
-1. **Measure, de baixo para cima:** cada nó calcula seu tamanho desejado dentro das restrições recebidas.
-2. **Layout, de cima para baixo:** o pai distribui espaço e define o retângulo final de cada filho.
+1. **Measure, bottom-up:** each node computes its desired size within the received constraints.
+2. **Layout, top-down:** the parent distributes space and defines the final rectangle for each child.
 
-Tipos centrais internos:
+Core internal types:
 
 ```go
 type Constraints struct {
@@ -233,13 +233,13 @@ type Rect struct {
 }
 ```
 
-Não será implementado CSS genérico. Cada prop suportada terá semântica documentada e teste próprio.
+Generic CSS will not be implemented. Every supported prop will have documented semantics and its own test.
 
-## 9. Eventos, foco e concorrência
+## 9. Events, focus, and concurrency
 
-Tipos públicos, handlers, teclas, eventos suportados e regras de propagação estão em [API.md](API.md).
+Public types, handlers, keys, supported events, and propagation rules are in [API.md](API.md).
 
-O loop principal será aproximadamente:
+The main loop is approximately:
 
 ```text
 for app is running:
@@ -251,21 +251,21 @@ for app is running:
     flush screen diff
 ```
 
-Somente a goroutine do runtime toca em instâncias, layout e buffers. Leitores de terminal e produtores externos publicam valores em canais. Handlers são executados em série; atualizações síncronas produzidas pelo mesmo evento são drenadas antes da reconciliação e aparecem juntas no próximo frame.
+Only the runtime goroutine touches instances, layout, and buffers. Terminal readers and external producers publish values to channels. Handlers run serially; synchronous updates produced by the same event are drained before reconciliation and appear together in the next frame.
 
-O runtime mantém a ordem de foco derivada da árvore host visível. Desmontar ou desabilitar o nó focado escolhe o próximo candidato válido; resize invalida layout e paint sem reinicializar componentes.
+The runtime maintains focus order derived from the visible host tree. Unmounting or disabling the focused node chooses the next valid candidate; resize invalidates layout and paint without reinitializing components.
 
-Eventos de mouse usam a árvore host já posicionada para hit testing. A busca percorre a ordem de pintura do topo para o fundo, respeita retângulos de clipping e escolhe o nó visível mais profundo. Mouse down estabelece captura temporária até mouse up; desmontar o alvo cancela a captura. O caminho anterior sob o ponteiro é comparado ao novo para derivar enter e leave sem armazenar estado em componentes de usuário.
+Mouse events use the already-positioned host tree for hit testing. The search walks paint order from top to bottom, respects clipping rectangles, and chooses the deepest visible node. Mouse down establishes temporary capture until mouse up; unmounting the target cancels capture. The previous path under the pointer is compared with the new path to derive enter and leave without storing state in user components.
 
-## 10. Organização inicial do código
+## 10. Initial code organization
 
-Uma prévia completa da árvore de diretórios, responsabilidade dos arquivos, direção de dependências e criação por fase está em [STRUCTURE.md](STRUCTURE.md).
+A complete overview of the directory tree, file responsibilities, dependency direction, and phased creation is in [STRUCTURE.md](STRUCTURE.md).
 
-O código expõe dois pacotes: `omnitui` para o runtime e `omnitui/components` para os builtins. `components` depende do núcleo; o núcleo nunca importa o catálogo. Ambos compartilham apenas a representação opaca de elementos em `internal/core`.
+The code exposes two packages: `omnitui` for the runtime and `omnitui/components` for builtins. `components` depends on the core; the core never imports the catalog. Both share only the opaque element representation in `internal/core`.
 
-Extrações para `internal/` só devem ocorrer quando uma fronteira estiver estável e houver benefício concreto de isolamento. O backend de terminal é a primeira fronteira provável, pois permitirá um backend headless para testes e, futuramente, Windows.
+Extractions into `internal/` should happen only when a boundary is stable and there is a concrete isolation benefit. The terminal backend is the first likely boundary because it enables a headless test backend and, eventually, Windows support.
 
-Interfaces internas que valem desde cedo:
+Internal interfaces worth defining early:
 
 ```go
 type Backend interface {
@@ -280,195 +280,195 @@ type Clock interface {
 }
 ```
 
-`Backend` viabiliza testes determinísticos. `Clock` só deve ser introduzido quando animações ou timers realmente entrarem no produto.
+`Backend` enables deterministic tests. `Clock` should be introduced only when animations or timers actually enter the product.
 
-## 11. Dependências
+## 11. Dependencies
 
-Orçamento inicial de dependências:
+Initial dependency budget:
 
-- `golang.org/x/term`: modo raw e tamanho do terminal;
-- uma biblioteca pequena de graphemes/largura Unicode, escolhida após um spike comparativo;
-- nenhuma dependência de framework TUI, layout ou gerenciamento de estado.
+- `golang.org/x/term`: raw mode and terminal size;
+- a small grapheme/Unicode-width library, selected after a comparative spike;
+- no TUI framework, layout, or state-management dependency.
 
-Se “do zero” precisar significar literalmente apenas biblioteca padrão, será necessário manter código específico por sistema operacional e tabelas Unicode próprias. Isso aumenta bastante o custo sem melhorar o modelo de componentes; por isso não é a recomendação inicial.
+If “from scratch” must literally mean the standard library only, platform-specific code and custom Unicode tables will be required. This significantly increases cost without improving the component model, so it is not the initial recommendation.
 
-## 12. Tratamento de erros e diagnóstico
+## 12. Error handling and diagnostics
 
-- Erros de I/O e cancelamento saem de `Run`.
-- Erros de uso — chave duplicada, tipo de estado incorreto ou atualização durante render — incluem o caminho de componentes.
-- Um panic de componente deve primeiro restaurar o terminal; depois pode ser propagado ou embrulhado conforme a política escolhida para `Run`.
-- Uma opção de diagnóstico futura poderá registrar causa de cada render, duração das fases e regiões alteradas da tela.
-- Não haverá error boundary no MVP; primeiro deve existir um contrato claro de recuperação do terminal.
+- I/O and cancellation errors are returned by `Run`.
+- Usage errors — duplicate keys, an incorrect state type, or an update during render — include the component path.
+- A component panic must first restore the terminal; it may then be propagated or wrapped according to the policy chosen for `Run`.
+- A future diagnostics option may record the cause of each render, phase durations, and changed screen regions.
+- There will be no error boundary in the MVP; a clear terminal-recovery contract must come first.
 
-## 13. Estratégia de testes
+## 13. Testing strategy
 
-O núcleo deve ser testável sem um terminal real.
+The core must be testable without a real terminal.
 
-### Unidade
+### Unit tests
 
-- `Element` preserva props, chave e filhos sem mutação.
-- `InitialState` é chamado uma vez por montagem.
-- estado sobrevive a render com mesmo tipo e chave.
-- estado é reinicializado quando tipo ou chave muda.
-- reordenação com chaves move instâncias e preserva seus estados.
-- props e filhos novos chegam ao render reutilizado.
-- o provider mais próximo vence e seu valor não vaza para irmãos.
-- atualizações funcionais são aplicadas em ordem e agrupadas por frame.
-- o parser reconhece todas as teclas declaradas no MVP e preserva modificadores disponíveis.
-- o parser reconhece SGR mouse, botões, movimento, release, wheel, coordenadas e modificadores.
-- `Consume` impede bubbling e comportamento padrão; `Propagate` mantém ambos.
-- foco e blur são emitidos uma vez, na ordem correta, sem propagação.
-- `Enter` e `Space` geram `PressEvent` somente quando o `KeyEvent` não é consumido.
-- hit testing respeita clipping e ordem de pintura; captura entrega move/up ao alvo original.
-- enter/leave são derivados uma vez por transição e clique esquerdo gera `PressEvent` somente com down/up compatíveis.
-- texto, paste, mudança, submit e ativação seguem a ordem declarada em [API.md](API.md).
-- resizes são coalescidos e mensagens externas preservam ordem.
-- resize preserva estado e recalcula layout.
-- measure/layout respeita constraints, clipping e Unicode.
-- diff gera ANSI apenas para células alteradas.
-- `Row` e `Column` convertem suas props para `Box` sem alterar identidade dos filhos.
-- `Text` mede, quebra e trunca por largura visual.
-- `Input` preserva cursor local, mantém valor controlado e trata edição, paste e submit.
-- `Tabs` valida chaves, ignora abas desabilitadas e aceita seleção por teclado ou clique.
-- `List` exige chaves, preserva seleção por chave e mantém o item selecionado visível.
-- scroll da `List` limita offsets, preserva âncora em reordenação e funciona com itens de alturas diferentes.
-- wheel desloca a `List` sem alterar `SelectedKey` e propaga quando não há mais espaço para rolar.
+- `Element` preserves props, keys, and children without mutation.
+- `InitialState` is called once per mount.
+- state survives a render with the same type and key.
+- state is reinitialized when type or key changes.
+- keyed reordering moves instances and preserves their state.
+- new props and children reach the reused render.
+- the nearest provider wins and its value does not leak to siblings.
+- functional updates are applied in order and grouped by frame.
+- the parser recognizes every key declared in the MVP and preserves available modifiers.
+- the parser recognizes SGR mouse, buttons, movement, release, wheel, coordinates, and modifiers.
+- `Consume` prevents bubbling and default behavior; `Propagate` preserves both.
+- focus and blur are emitted once, in the correct order, without propagation.
+- `Enter` and `Space` generate `PressEvent` only when the `KeyEvent` is not consumed.
+- hit testing respects clipping and paint order; capture delivers move/up to the original target.
+- enter/leave are derived once per transition, and a left click generates `PressEvent` only for compatible down/up pairs.
+- text, paste, change, submit, and activation follow the order declared in [API.md](API.md).
+- resizes are coalesced and external messages preserve order.
+- resize preserves state and recalculates layout.
+- measure/layout respects constraints, clipping, and Unicode.
+- diff generates ANSI only for changed cells.
+- `Row` and `Column` convert their props to `Box` without changing child identity.
+- `Text` measures, wraps, and truncates by visual width.
+- `Input` preserves its local cursor, keeps a controlled value, and handles editing, paste, and submit.
+- `Tabs` validates keys, ignores disabled tabs, and accepts selection by keyboard or click.
+- `List` requires keys, preserves keyed selection, and keeps the selected item visible.
+- `List` scrolling clamps offsets, preserves its anchor during reordering, and works with items of different heights.
+- wheel input moves the `List` without changing `SelectedKey` and propagates when no more space is available.
 
-### Integração headless
+### Headless integration
 
-Um `TestBackend` recebe eventos sintéticos e captura frames:
+A `TestBackend` receives synthetic events and captures frames:
 
-1. montar o contador do exemplo;
-2. conferir o primeiro frame;
-3. enviar `Tab` e `Enter`;
-4. conferir texto incrementado e foco;
-5. reordenar componentes com chaves;
-6. confirmar que seus estados acompanharam as chaves;
-7. editar e submeter um `Input` controlado;
-8. navegar entre `Tabs` e itens de `List` por teclado;
-9. clicar em `Button`, `Input`, `Tabs` e `List` com coordenadas sintéticas;
-10. rolar uma `List` por wheel e conferir offset, clipping e seleção;
-11. cancelar e verificar fechamento do backend.
+1. mount the example counter;
+2. inspect the first frame;
+3. send `Tab` and `Enter`;
+4. inspect incremented text and focus;
+5. reorder keyed components;
+6. confirm that their state followed the keys;
+7. edit and submit a controlled `Input`;
+8. navigate `Tabs` and `List` items by keyboard;
+9. click `Button`, `Input`, `Tabs`, and `List` with synthetic coordinates;
+10. scroll a `List` by wheel and inspect offset, clipping, and selection;
+11. cancel and verify backend shutdown.
 
-### Terminal real
+### Real terminal
 
-Testes em pseudo-terminal validam modo raw, ativação/desativação do protocolo SGR mouse, resize, restauração após erro e sequências ANSI. Snapshots são úteis para árvore host e buffers; o comportamento do reconciliador deve preferir asserções semânticas, menos frágeis.
+Pseudo-terminal tests validate raw mode, SGR mouse protocol enable/disable, resize, restoration after errors, and ANSI sequences. Snapshots are useful for host trees and buffers; reconciler behavior should prefer less fragile semantic assertions.
 
-## 14. Plano incremental
+## 14. Incremental plan
 
-### Fase 0 — contrato executável
+### Phase 0 — executable contract
 
-Entregas:
+Deliverables:
 
-- inicializar módulo Go e CI básica;
-- escrever o exemplo `Counter` como teste de compilação;
-- definir `Element`, `Component`, props, estado, contexto e filhos;
-- criar backend headless mínimo.
+- initialize the Go module and basic CI;
+- write the `Counter` example as a compilation test;
+- define `Element`, `Component`, props, state, context, and children;
+- create a minimal headless backend.
 
-Critério de conclusão: o exemplo compila e monta uma árvore inspecionável, ainda sem terminal.
+Completion criterion: the example compiles and mounts an inspectable tree, still without a terminal.
 
-### Fase 1 — reconciliação e estado
+### Phase 1 — reconciliation and state
 
-Entregas:
+Deliverables:
 
-- montar, atualizar e desmontar instâncias;
-- implementar identidade posicional e por chave;
-- implementar fila de `SetState`/`UpdateState`;
-- implementar provider/consumer de contexto;
-- adicionar diagnóstico de caminhos e chaves duplicadas.
+- mount, update, and unmount instances;
+- implement positional and keyed identity;
+- implement the `SetState`/`UpdateState` queue;
+- implement context providers/consumers;
+- add diagnostics for paths and duplicate keys.
 
-Critério de conclusão: todos os testes de identidade, estado, props, filhos e contexto passam em memória.
+Completion criterion: all identity, state, props, children, and context tests pass in memory.
 
-### Fase 2 — árvore host e layout
+### Phase 2 — host tree and layout
 
-Entregas:
+Deliverables:
 
-- `Text`, `Box`, `Row`, `Column`, `Fragment` e `None`;
-- measure/layout com row, column, constraints, padding, gap e clipping;
-- buffer de células com Unicode e estilos;
-- snapshots determinísticos da tela.
+- `Text`, `Box`, `Row`, `Column`, `Fragment`, and `None`;
+- measure/layout with row, column, constraints, padding, gap, and clipping;
+- cell buffer with Unicode and styles;
+- deterministic screen snapshots.
 
-Critério de conclusão: árvores headless produzem buffers corretos em diferentes tamanhos.
+Completion criterion: headless trees produce correct buffers at different sizes.
 
-### Fase 3 — terminal interativo
+### Phase 3 — interactive terminal
 
-Entregas:
+Deliverables:
 
-- backend Unix, modo raw e alternate screen;
-- parser de teclas, SGR mouse, wheel e resize;
-- ativação de mouse tracking e restauração dos modos do terminal;
-- diff ANSI frontal/traseiro;
-- restauração robusta do terminal.
+- Unix backend, raw mode, and alternate screen;
+- key, SGR mouse, wheel, and resize parser;
+- mouse tracking enablement and terminal mode restoration;
+- front/back ANSI diff;
+- robust terminal restoration.
 
-Critério de conclusão: o contador roda em terminal real, redimensiona sem perder estado e sempre restaura o terminal ao sair.
+Completion criterion: the counter runs in a real terminal, resizes without losing state, and always restores the terminal on exit.
 
-### Fase 4 — interação
+### Phase 4 — interaction
 
-Entregas:
+Deliverables:
 
-- foco, bubbling e consumo de eventos;
-- `KeyEvent`, `MouseEvent`, `WheelEvent`, `FocusEvent`, `BlurEvent`, `PressEvent`, `TextInputEvent`, `PasteEvent`, `ResizeEvent` e `MessageEvent`;
-- hit testing, hover path e captura de mouse;
-- comportamentos padrão canceláveis e despacho ordenado;
-- `Button` acessível por teclado e mouse;
-- testes end-to-end com pseudo-terminal;
-- medição de tempo de render/layout/paint.
+- focus, bubbling, and event consumption;
+- `KeyEvent`, `MouseEvent`, `WheelEvent`, `FocusEvent`, `BlurEvent`, `PressEvent`, `TextInputEvent`, `PasteEvent`, `ResizeEvent`, and `MessageEvent`;
+- hit testing, hover path, and mouse capture;
+- cancelable default behavior and ordered dispatch;
+- keyboard- and mouse-accessible `Button`;
+- end-to-end pseudo-terminal tests;
+- render/layout/paint timing.
 
-Critério de conclusão: interação por teclado e mouse é determinística, eventos atingem o alvo correto sob clipping e um frame comum não reescreve células inalteradas.
+Completion criterion: keyboard and mouse interaction is deterministic, events reach the correct target under clipping, and a normal frame does not rewrite unchanged cells.
 
-### Fase 5 — builtins com estado e seleção
+### Phase 5 — stateful and selectable builtins
 
-Entregas:
+Deliverables:
 
-- `Input` controlado, cursor, edição, paste, submit e posicionamento por clique;
-- `Tabs` controlado, navegação de cabeçalhos, clique e painel ativo;
-- `List` controlada, viewport, navegação, clique, ativação, scrollbar, wheel e scroll automático;
-- `ValueChangeEvent`, `SubmitEvent` e `ActivateEvent`;
-- documentação e exemplos de composição para todos os builtins.
+- controlled `Input`, cursor, editing, paste, submit, and click positioning;
+- controlled `Tabs`, header navigation, clicks, and active panel;
+- controlled `List`, viewport, navigation, clicks, activation, scrollbar, wheel, and automatic scrolling;
+- `ValueChangeEvent`, `SubmitEvent`, and `ActivateEvent`;
+- documentation and composition examples for all builtins.
 
-Critério de conclusão: `Row`, `Column`, `Text`, `Input`, `Tabs` e `List` são exportados por `omnitui/components`, não criam dependência inversa no runtime e passam pelos mesmos testes de reconciliação que componentes de usuário.
+Completion criterion: `Row`, `Column`, `Text`, `Input`, `Tabs`, and `List` are exported by `omnitui/components`, do not create a reverse runtime dependency, and pass the same reconciliation tests as user components.
 
-### Fase 6 — endurecimento antes de expandir
+### Phase 6 — hardening before expansion
 
-Entregas:
+Deliverables:
 
-- race detector, fuzzing do parser ANSI e testes de panic;
-- documentação pública e dois exemplos maiores;
-- benchmarks com árvores profundas, listas com chaves e tela cheia;
-- decisão baseada em medidas sobre memoização ou render por subárvore.
+- race detector, ANSI parser fuzzing, and panic tests;
+- public documentation and two larger examples;
+- benchmarks with deep trees, keyed lists, and full screens;
+- measurement-based decision about memoization or subtree rendering.
 
-Critério de conclusão: API mínima estabilizada e gargalos conhecidos por benchmark, não por suposição.
+Completion criterion: the minimal API is stable and bottlenecks are known from benchmarks rather than assumptions.
 
-## 15. Decisões deliberadamente adiadas
+## 15. Deliberately deferred decisions
 
 - hooks (`UseState`, `UseEffect`);
-- lifecycle e efeitos com cleanup;
-- componentes assíncronos ou suspense;
+- lifecycle and cleanup effects;
+- asynchronous components or suspense;
 - render concorrente;
-- memoização pública;
-- portals e overlays fora da árvore normal;
-- double click, drag semântico, arraste de scrollbar, acesso direto ao clipboard, IME e Windows;
-- virtualização de listas;
-- animações e timers;
-- markup ou DSL própria.
+- public memoization;
+- portals and overlays outside the normal tree;
+- double-click, semantic drag, scrollbar dragging, direct clipboard access, IME, and Windows;
+- list virtualization;
+- animations and timers;
+- custom markup or DSL.
 
-Cada item só deve entrar com um caso de uso, semântica definida e teste. O núcleo não deve antecipar todas as capacidades do React: a inspiração principal é árvore declarativa, fluxo de dados, identidade e reconciliação previsível.
+Each item should be added only with a use case, defined semantics, and a test. The core should not anticipate every React capability: the primary inspiration is declarative trees, data flow, identity, and predictable reconciliation.
 
-## 16. Critérios de sucesso do MVP
+## 16. MVP success criteria
 
-O MVP estará pronto quando for possível demonstrar, com testes e um exemplo executável, que:
+The MVP is ready when tests and an executable example can demonstrate that:
 
-1. um componente recebe props, contexto e filhos tipados;
-2. duas instâncias do mesmo componente mantêm estados independentes;
-3. uma atualização de estado causa novo render sem bloquear ou corromper o loop;
-4. tipo, posição e chave determinam corretamente se o estado é preservado;
-5. componentes compõem primitivas e outros componentes recursivamente;
-6. resize e eventos não reinicializam a árvore;
-7. somente diferenças do buffer são escritas no terminal;
-8. o terminal é restaurado em toda forma de saída;
-9. `go test -race ./...` passa;
-10. `Row`, `Column`, `Text`, `Input`, `Tabs` e `List` são exportados exclusivamente por `omnitui/components`;
-11. mouse SGR, hit testing, captura, press por clique e wheel funcionam no backend real e headless;
-12. a API do exemplo `Counter` permanece pequena e compreensível.
+1. a component receives typed props, context, and children;
+2. two instances of the same component maintain independent state;
+3. a state update causes a new render without blocking or corrupting the loop;
+4. type, position, and key correctly determine whether state is preserved;
+5. components recursively compose primitives and other components;
+6. resize and events do not reinitialize the tree;
+7. only buffer differences are written to the terminal;
+8. the terminal is restored on every exit path;
+9. `go test -race ./...` passes;
+10. `Row`, `Column`, `Text`, `Input`, `Tabs`, and `List` are exported exclusively by `omnitui/components`;
+11. SGR mouse, hit testing, capture, click press, and wheel work in the real and headless backends;
+12. the `Counter` example API remains small and understandable.
 
-Esses critérios formam a linha de corte. Recursos que não ajudam diretamente a cumpri-los devem esperar a primeira versão funcionar de ponta a ponta.
+These criteria define the release boundary. Features that do not directly help meet them should wait until the first end-to-end version works.

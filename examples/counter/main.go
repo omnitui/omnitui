@@ -26,7 +26,7 @@ func (counter) Render(ctx omnitui.Context, props counterProps, state counterStat
 			Style:   omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightCyan), Attributes: omnitui.Bold},
 		}),
 		components.Button(components.ButtonProps{
-			Label:      "Incrementar",
+			Label:      "Increment",
 			Style:      omnitui.Style{Foreground: omnitui.ANSI(omnitui.Black), Background: omnitui.ANSI(omnitui.BrightGreen), Attributes: omnitui.Bold},
 			FocusStyle: omnitui.Style{Foreground: omnitui.ANSI(omnitui.Black), Background: omnitui.ANSI(omnitui.BrightWhite), Attributes: omnitui.Bold | omnitui.Underline},
 			OnPress: func(omnitui.PressEvent) omnitui.EventResult {
@@ -41,7 +41,7 @@ func (counter) Render(ctx omnitui.Context, props counterProps, state counterStat
 var counterType = omnitui.Define[counterProps, counterState]("Counter", counter{})
 
 func main() {
-	app := omnitui.New(omnitui.Create(counterType, counterProps{Label: "Cliques"}), omnitui.Options{})
+	app := omnitui.New(omnitui.Create(counterType, counterProps{Label: "Clicks"}), omnitui.Options{})
 	if err := app.Run(context.Background()); err != nil {
 		panic(err)
 	}

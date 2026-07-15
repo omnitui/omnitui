@@ -61,9 +61,9 @@ func (styledExample) InitialState(string) styledState {
 }
 
 func (styledExample) Render(ctx omnitui.Context, _ string, state styledState, _ omnitui.Children) omnitui.Element {
-	status := "Ainda não salvo"
+	status := "Not saved yet"
 	if state.Saved {
-		status = "Salvo para " + state.Name
+		status = "Saved for " + state.Name
 	}
 
 	return components.Box(
@@ -75,11 +75,11 @@ func (styledExample) Render(ctx omnitui.Context, _ string, state styledState, _ 
 			Style:     surfaceStyle,
 		},
 		components.Text(components.TextProps{
-			Content: "OmniTUI • Componentes estilizados",
+			Content: "OmniTUI • Styled components",
 			Style:   titleStyle,
 		}),
 		components.Text(components.TextProps{
-			Content: "Cores, atributos, bordas e estilos de foco em uma única tela.",
+			Content: "Colors, attributes, borders, and focus styles on one screen.",
 			Style:   mutedStyle,
 		}),
 		components.Tabs(components.TabsProps{
@@ -87,9 +87,9 @@ func (styledExample) Render(ctx omnitui.Context, _ string, state styledState, _ 
 			Style:       tabStyle,
 			ActiveStyle: activeTabStyle,
 			Items: []components.TabItem{
-				{Key: "dashboard", Label: "Dashboard", Content: components.Text(components.TextProps{Content: "● Todos os serviços estão operacionais", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightGreen), Attributes: omnitui.Bold}})},
-				{Key: "metrics", Label: "Métricas", Content: components.Text(components.TextProps{Content: "CPU  24%   Memória  61%   Latência  18ms", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightYellow)}})},
-				{Key: "help", Label: "Ajuda", Content: components.Text(components.TextProps{Content: "Use Tab para avançar o foco e Enter para ativar controles."})},
+				{Key: "dashboard", Label: "Dashboard", Content: components.Text(components.TextProps{Content: "● All services are operational", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightGreen), Attributes: omnitui.Bold}})},
+				{Key: "metrics", Label: "Metrics", Content: components.Text(components.TextProps{Content: "CPU  24%   Memory  61%   Latency  18ms", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightYellow)}})},
+				{Key: "help", Label: "Help", Content: components.Text(components.TextProps{Content: "Use Tab to move focus and Enter to activate controls."})},
 			},
 			OnChange: func(event omnitui.ValueChangeEvent) omnitui.EventResult {
 				omnitui.UpdateState(ctx, func(current styledState) styledState {
@@ -101,10 +101,10 @@ func (styledExample) Render(ctx omnitui.Context, _ string, state styledState, _ 
 		}),
 		components.Row(
 			components.RowProps{Gap: 1, Align: components.AlignCenter},
-			components.Text(components.TextProps{Content: "Nome:", Style: omnitui.Style{Attributes: omnitui.Bold}}),
+			components.Text(components.TextProps{Content: "Name:", Style: omnitui.Style{Attributes: omnitui.Bold}}),
 			components.Input(components.InputProps{
 				Value:       state.Name,
-				Placeholder: "Digite seu nome",
+				Placeholder: "Enter your name",
 				Width:       omnitui.Cells(20),
 				Style:       inputStyle,
 				FocusStyle:  inputFocusStyle,
@@ -118,7 +118,7 @@ func (styledExample) Render(ctx omnitui.Context, _ string, state styledState, _ 
 				},
 			}),
 			components.Button(components.ButtonProps{
-				Label:      "Salvar",
+				Label:      "Save",
 				Style:      buttonStyle,
 				FocusStyle: buttonFocusStyle,
 				OnPress: func(omnitui.PressEvent) omnitui.EventResult {

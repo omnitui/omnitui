@@ -18,10 +18,10 @@ var formPanelStyle = omnitui.Style{
 func (form) InitialState(string) formState { return formState{} }
 func (form) Render(ctx omnitui.Context, _ string, state formState, _ omnitui.Children) omnitui.Element {
 	return components.Column(components.ColumnProps{Padding: omnitui.All(1), Gap: 1, Style: formPanelStyle},
-		components.Text(components.TextProps{Content: "Nome", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightCyan), Attributes: omnitui.Bold}}),
+		components.Text(components.TextProps{Content: "Name", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightCyan), Attributes: omnitui.Bold}}),
 		components.Input(components.InputProps{
 			Value:       state.Name,
-			Placeholder: "Digite seu nome",
+			Placeholder: "Enter your name",
 			Width:       omnitui.Cells(24),
 			Style:       omnitui.Style{Foreground: omnitui.ANSI(omnitui.White), Background: omnitui.RGB(35, 42, 58)},
 			FocusStyle:  omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightWhite), Background: omnitui.RGB(45, 75, 110), Attributes: omnitui.Underline},

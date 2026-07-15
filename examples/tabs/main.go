@@ -25,7 +25,7 @@ func (tabsExample) InitialState(string) tabsState {
 func (tabsExample) Render(ctx omnitui.Context, _ string, state tabsState, _ omnitui.Children) omnitui.Element {
 	return components.Column(
 		components.ColumnProps{Gap: 1, Padding: omnitui.All(1), Style: tabsPanelStyle},
-		components.Text(components.TextProps{Content: "Use ←/→ para trocar de aba e Enter para selecionar", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightBlack), Attributes: omnitui.Dim}}),
+		components.Text(components.TextProps{Content: "Use ←/→ to switch tabs and Enter to select", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightBlack), Attributes: omnitui.Dim}}),
 		components.Tabs(components.TabsProps{
 			ActiveKey:   state.ActiveKey,
 			Style:       omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightBlack)},
@@ -33,11 +33,11 @@ func (tabsExample) Render(ctx omnitui.Context, _ string, state tabsState, _ omni
 			Items: []components.TabItem{
 				{
 					Key:   "overview",
-					Label: "Visão geral",
+					Label: "Overview",
 					Content: components.Column(
 						components.ColumnProps{Gap: 1},
-						components.Text(components.TextProps{Content: "Projeto: OmniTUI", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightCyan), Attributes: omnitui.Bold}}),
-						components.Text(components.TextProps{Content: "Status: em desenvolvimento", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightGreen)}}),
+						components.Text(components.TextProps{Content: "Project: OmniTUI", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightCyan), Attributes: omnitui.Bold}}),
+						components.Text(components.TextProps{Content: "Status: in development", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightGreen)}}),
 					),
 				},
 				{
@@ -45,14 +45,14 @@ func (tabsExample) Render(ctx omnitui.Context, _ string, state tabsState, _ omni
 					Label: "Logs",
 					Content: components.Column(
 						components.ColumnProps{Gap: 1},
-						components.Text(components.TextProps{Content: "[info] aplicação iniciada", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightYellow)}}),
-						components.Text(components.TextProps{Content: "[info] nenhuma falha encontrada", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightGreen)}}),
+						components.Text(components.TextProps{Content: "[info] application started", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightYellow)}}),
+						components.Text(components.TextProps{Content: "[info] no failures found", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightGreen)}}),
 					),
 				},
 				{
 					Key:     "settings",
-					Label:   "Configurações",
-					Content: components.Text(components.TextProps{Content: "Tema: padrão | Mouse: habilitado", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightYellow)}}),
+					Label:   "Settings",
+					Content: components.Text(components.TextProps{Content: "Theme: default | Mouse: enabled", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightYellow)}}),
 				},
 			},
 			OnChange: func(event omnitui.ValueChangeEvent) omnitui.EventResult {

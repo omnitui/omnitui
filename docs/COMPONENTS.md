@@ -1,18 +1,18 @@
-# OmniTUI — componentes builtin
+# OmniTUI — builtin components
 
-Este documento demonstra os componentes oficiais `Row`, `Column`, `Text`, `Input`, `Tabs` e `List`, exportados pelo pacote público `omnitui/components`. A referência de assinaturas e props está em [API.md](API.md); o modelo de renderização está em [DESIGN.md](DESIGN.md).
+This document describes the official `Row`, `Column`, `Text`, `Input`, `Tabs`, and `List` components exported by the public `omnitui/components` package. Signatures and props are documented in [API.md](API.md); the rendering model is described in [DESIGN.md](DESIGN.md).
 
-## 1. Convenções
+## 1. Conventions
 
-- Todos os builtins recebem props.
-- `Row`, `Column` e `List` recebem filhos.
-- `Tabs` recebe seus painéis como `Element` dentro de `TabItem`.
-- `Text` e `Input` são folhas e não recebem filhos.
-- `Input`, `Tabs` e `List` são controlados: o valor público vem das props e eventos propõem alterações ao componente pai.
-- Estado interno guarda somente detalhes de interação, como cursor, foco local e offset de scroll.
-- Handlers retornam `omnitui.Propagate` ou `omnitui.Consume`, conforme o contrato de eventos.
-- `omnitui.Cells(n)` cria um `Size` fixo em células; `omnitui.All(n)` cria espaçamento igual nos quatro lados.
-- Exemplos usam `omnitui` para o núcleo e `components` para os builtins; representam trechos de um método `Render` e omitem tratamento de erros.
+- All builtins receive props.
+- `Row`, `Column`, and `List` receive children.
+- `Tabs` receives its panels as `Element` values inside `TabItem`.
+- `Text` and `Input` are leaves and do not receive children.
+- `Input`, `Tabs`, and `List` are controlled: the public value comes from props, and events propose changes to the parent component.
+- Internal state stores only interaction details such as the cursor, local focus, and scroll offset.
+- Handlers return `omnitui.Propagate` or `omnitui.Consume` according to the event contract.
+- `omnitui.Cells(n)` creates a cell-sized `Size`; `omnitui.All(n)` creates equal spacing on all four sides.
+- Examples use `omnitui` for the core and `components` for builtins; they represent snippets from a `Render` method and omit error handling.
 
 ```go
 import (
@@ -21,24 +21,24 @@ import (
 )
 ```
 
-| Componente | Finalidade | Recebe filhos | Estado interno |
+| Component | Purpose | Receives children | Internal state |
 |---|---|---:|---|
-| `Row` | Layout horizontal | Sim | Não |
-| `Column` | Layout vertical | Sim | Não |
-| `Text` | Texto estático | Não | Não |
-| `Input` | Edição de texto em uma linha | Não | Cursor e scroll horizontal |
-| `Tabs` | Navegação entre painéis | Via `TabItem.Content` | Cabeçalho focado |
-| `List` | Lista selecionável e rolável | Sim | Foco e offset vertical |
+| `Row` | Horizontal layout | Yes | No |
+| `Column` | Vertical layout | Yes | No |
+| `Text` | Static text | No | No |
+| `Input` | Single-line text editing | No | Cursor and horizontal scroll |
+| `Tabs` | Navigation between panels | Via `TabItem.Content` | Focused header |
+| `List` | Selectable, scrollable list | Yes | Focus and vertical offset |
 
 ## 2. `Row`
 
-Organiza filhos horizontalmente. É implementado sobre `Box` com direção horizontal.
+Arranges children horizontally. It is implemented on top of `Box` with horizontal direction.
 
-Assinatura e props: [API.md — `Row`](API.md#row).
+Signature and props: [API.md — `Row`](API.md#row).
 
-Por padrão, mede a soma das larguras dos filhos, usa a maior altura e não quebra linha. `Justify` distribui espaço no eixo horizontal; `Align` posiciona os filhos no eixo vertical.
+By default, it measures the sum of the children’s widths, uses the greatest height, and does not wrap. `Justify` distributes space along the horizontal axis; `Align` positions children along the vertical axis.
 
-### Exemplo
+### Example
 
 ```go
 return components.Row(
@@ -47,16 +47,16 @@ return components.Row(
         Align:   components.AlignCenter,
         Justify: components.JustifyEnd,
     },
-    components.Text(components.TextProps{Content: "Salvar alterações?"}),
+    components.Text(components.TextProps{Content: "Save changes?"}),
     components.Button(components.ButtonProps{
-        Label: "Cancelar",
+        Label: "Cancel",
         OnPress: func(event omnitui.PressEvent) omnitui.EventResult {
             cancel()
             return omnitui.Consume
         },
     }),
     components.Button(components.ButtonProps{
-        Label: "Salvar",
+        Label: "Save",
         OnPress: func(event omnitui.PressEvent) omnitui.EventResult {
             save()
             return omnitui.Consume
@@ -67,13 +67,13 @@ return components.Row(
 
 ## 3. `Column`
 
-Organiza filhos verticalmente. Compartilha a semântica de `Row`, invertendo os eixos.
+Arranges children vertically. It shares `Row`’s semantics with the axes reversed.
 
-Assinatura e props: [API.md — `Column`](API.md#column).
+Signature and props: [API.md — `Column`](API.md#column).
 
-`Row` e `Column` têm props separadas para manter a API legível, embora convertam internamente para a mesma estrutura de layout.
+`Row` and `Column` have separate props to keep the API readable, even though they convert internally to the same layout structure.
 
-### Exemplo
+### Example
 
 ```go
 return components.Column(
@@ -81,25 +81,25 @@ return components.Column(
         Gap:     1,
         Padding: omnitui.All(1),
     },
-    components.Text(components.TextProps{Content: "Perfil"}),
-    components.Text(components.TextProps{Content: "Nome: Ada Lovelace"}),
-    components.Text(components.TextProps{Content: "Cargo: Engenheira"}),
+    components.Text(components.TextProps{Content: "Profile"}),
+    components.Text(components.TextProps{Content: "Name: Ada Lovelace"}),
+    components.Text(components.TextProps{Content: "Role: Engineer"}),
 )
 ```
 
 ## 4. `Text`
 
-Renderiza texto estático, não recebe foco e não aceita filhos.
+Renders static text, does not receive focus, and does not accept children.
 
-Assinatura e props: [API.md — `Text`](API.md#text).
+Signature and props: [API.md — `Text`](API.md#text).
 
-O conteúdo é segmentado em graphemes antes da medição. `MaxLines == 0` significa sem limite. Wrapping e truncamento respeitam largura visual, não quantidade de bytes ou runes.
+Content is segmented into graphemes before measurement. `MaxLines == 0` means no limit. Wrapping and truncation respect visual width rather than byte or rune count.
 
-### Exemplo
+### Example
 
 ```go
 return components.Text(components.TextProps{
-    Content:  "Uma descrição longa que pode ocupar mais de uma linha.",
+    Content:  "A long description that may occupy more than one line.",
     Wrap:     components.WrapWord,
     MaxLines: 2,
     Truncate: components.TruncateEllipsis,
@@ -112,13 +112,13 @@ return components.Text(components.TextProps{
 
 ## 5. `Input`
 
-Campo de texto de uma linha, focável e controlado. O valor exibido sempre vem de `Value`; `OnChange` propõe um novo valor e o pai deve atualizar seu estado para aceitá-lo.
+Controlled, focusable, single-line text field. The displayed value always comes from `Value`; `OnChange` proposes a new value, and the parent must update its state to accept it.
 
-Assinatura e props: [API.md — `Input`](API.md#input).
+Signature and props: [API.md — `Input`](API.md#input).
 
-O estado interno guarda cursor e deslocamento horizontal, nunca uma segunda cópia de `Value`. Inserção, Backspace, Delete, setas, Home, End, paste e submit com Enter fazem parte da primeira versão. Clique esquerdo posiciona o cursor no grapheme visual mais próximo; arrastar para selecionar texto fica fora do MVP. `MaxLength` conta graphemes. `Mask` altera somente a pintura.
+Internal state stores the cursor and horizontal offset, never a second copy of `Value`. Insertion, Backspace, Delete, arrow keys, Home, End, paste, and Enter submission are part of the first version. A left click positions the cursor at the nearest visual grapheme; dragging to select text is outside the MVP. `MaxLength` counts graphemes. `Mask` changes painting only.
 
-### Exemplo
+### Example
 
 ```go
 type FormState struct {
@@ -129,7 +129,7 @@ type FormState struct {
 func renderNameInput(ctx omnitui.Context, state FormState) omnitui.Element {
     return components.Input(components.InputProps{
         Value:       state.Name,
-        Placeholder: "Digite seu nome",
+        Placeholder: "Enter your name",
         MaxLength:   80,
         OnChange: func(event omnitui.ValueChangeEvent) omnitui.EventResult {
             omnitui.UpdateState(ctx, func(current FormState) FormState {
@@ -151,13 +151,13 @@ func renderNameInput(ctx omnitui.Context, state FormState) omnitui.Element {
 
 ## 6. `Tabs`
 
-Exibe uma barra de abas e o painel ativo. A seleção é controlada por `ActiveKey`.
+Displays a tab bar and the active panel. Selection is controlled by `ActiveKey`.
 
-Assinatura e props: [API.md — `Tabs`](API.md#tabs).
+Signature and props: [API.md — `Tabs`](API.md#tabs).
 
-Chaves devem ser únicas e estáveis. `ActiveKey == ""` exibe a primeira aba habilitada. Uma chave inexistente ou desabilitada é erro de props. Setas movem o foco; `Enter`, `Space` ou clique esquerdo em um cabeçalho propõem uma nova chave.
+Keys must be unique and stable. `ActiveKey == ""` displays the first enabled tab. A missing or disabled key is a props error. Arrow keys move focus; `Enter`, `Space`, or a left click on a header proposes a new key.
 
-### Exemplo
+### Example
 
 ```go
 type ScreenState struct {
@@ -170,16 +170,16 @@ func renderTabs(ctx omnitui.Context, state ScreenState) omnitui.Element {
         Items: []components.TabItem{
             {
                 Key:   "overview",
-                Label: "Visão geral",
+                Label: "Overview",
                 Content: components.Text(components.TextProps{
-                    Content: "Resumo do projeto",
+                    Content: "Project summary",
                 }),
             },
             {
                 Key:   "logs",
                 Label: "Logs",
                 Content: components.Text(components.TextProps{
-                    Content: "Nenhum erro encontrado",
+                    Content: "No errors found",
                 }),
             },
         },
@@ -196,50 +196,50 @@ func renderTabs(ctx omnitui.Context, state ScreenState) omnitui.Element {
 
 ## 7. `List`
 
-Apresenta filhos como itens selecionáveis em uma viewport vertical. Cada filho direto deve ter `WithKey`; a chave identifica a seleção e preserva identidade durante reordenação.
+Displays children as selectable items in a vertical viewport. Every direct child must have `WithKey`; the key identifies selection and preserves identity during reordering.
 
-Assinatura e props: [API.md — `List`](API.md#list).
+Signature and props: [API.md — `List`](API.md#list).
 
-Setas, Home, End, PageUp e PageDown propõem uma nova seleção. `Enter` emite `ActivateEvent`. O estado interno mantém foco e offset de scroll; `SelectedKey` permanece controlado pelo pai. `Empty` é renderizado quando não há itens.
+Arrow keys, Home, End, PageUp, and PageDown propose a new selection. `Enter` emits `ActivateEvent`. Internal state maintains focus and scroll offset; `SelectedKey` remains controlled by the parent. `Empty` is rendered when there are no items.
 
-### Scroll
+### Scrolling
 
-O `List` cria uma viewport rolável quando `Height` resolve para uma altura finita e a soma da altura visual dos itens e gaps ultrapassa esse espaço. Com altura automática, a lista cresce para comportar os itens e não há scroll.
+`List` creates a scrollable viewport when `Height` resolves to a finite height and the combined visual height of the items and gaps exceeds that space. With automatic height, the list grows to fit its items and does not scroll.
 
-O offset é medido em **linhas do terminal**, não em índices. Isso permite itens com múltiplas linhas e alturas diferentes. Internamente, o estado usa a chave do primeiro item visível e o deslocamento dentro dele como âncora; assim, inserir ou reordenar itens antes da viewport não causa um salto desnecessário.
+The offset is measured in **terminal rows**, not indexes. This supports multi-line items with different heights. Internally, state uses the key of the first visible item and its intra-item offset as an anchor, so inserting or reordering items before the viewport does not cause an unnecessary jump.
 
-Valores de `ScrollbarMode`: [API.md — `List`](API.md#list).
+`ScrollbarMode` values: [API.md — `List`](API.md#list).
 
-- `ScrollbarAuto` ocupa uma coluna somente quando existe overflow.
-- `ScrollbarAlways` reserva uma coluna mesmo quando todo o conteúdo cabe.
-- `ScrollbarHidden` mantém o scroll, mas não desenha o indicador.
-- `ScrollPadding` tenta manter essa quantidade de linhas livres acima e abaixo do item selecionado. Nas extremidades ou quando o item é maior que a viewport, a restrição é relaxada.
+- `ScrollbarAuto` occupies a column only when overflow exists.
+- `ScrollbarAlways` reserves a column even when all content fits.
+- `ScrollbarHidden` keeps scrolling enabled but does not draw the indicator.
+- `ScrollPadding` attempts to keep this number of free rows above and below the selected item. The constraint is relaxed at the edges or when the item is taller than the viewport.
 
-#### Navegação e scroll automático
+#### Navigation and automatic scrolling
 
-- `Up` e `Down` propõem o item anterior ou seguinte. Quando o pai aceita a proposta em `SelectedKey`, a lista aplica o menor deslocamento necessário para torná-lo visível.
-- `PageUp` e `PageDown` propõem o primeiro item elegível aproximadamente uma altura de viewport acima ou abaixo, descontando uma linha de sobreposição.
-- `Home` propõe o primeiro item; quando aceito, move a viewport para o topo.
-- `End` propõe o último item; quando aceito, move a viewport para o final.
-- Com `Wrap`, ultrapassar uma extremidade propõe a extremidade oposta e, se aceita, desloca a viewport até ela.
-- Alterar `SelectedKey` externamente revela o item correspondente no próximo layout. Essa é a forma declarativa de realizar scroll programático no MVP.
-- Clique esquerdo em um item propõe sua chave como seleção e transfere o foco para a `List`.
-- Wheel altera diretamente a âncora de scroll sem mudar `SelectedKey`; portanto, a seleção pode ficar temporariamente fora da viewport.
-- `OnWheel` roda antes do comportamento padrão. `Consume` impede o scroll; no limite superior ou inferior, um wheel não consumido propaga para permitir containers roláveis aninhados no futuro.
+- `Up` and `Down` propose the previous or next item. When the parent accepts the proposal in `SelectedKey`, the list applies the smallest offset needed to make it visible.
+- `PageUp` and `PageDown` propose the first eligible item approximately one viewport height above or below, subtracting one overlap row.
+- `Home` proposes the first item; when accepted, it moves the viewport to the top.
+- `End` proposes the last item; when accepted, it moves the viewport to the bottom.
+- With `Wrap`, crossing an edge proposes the opposite edge and, if accepted, moves the viewport there.
+- Changing `SelectedKey` externally reveals the corresponding item during the next layout. This is the declarative way to perform programmatic scrolling in the MVP.
+- A left click on an item proposes its key as the selection and moves focus to the `List`.
+- Wheel input changes the scroll anchor directly without changing `SelectedKey`; selection can therefore be temporarily outside the viewport.
+- `OnWheel` runs before the default behavior. `Consume` prevents scrolling; at the upper or lower limit, an unconsumed wheel event propagates to allow nested scrollable containers in the future.
 
-Ao mudar a seleção, o item é considerado visível quando todo o seu retângulo cabe na viewport. Se ele for mais alto que a viewport, sua primeira linha é alinhada ao topo e o restante é recortado. Scroll manual por wheel não força esse invariant até a próxima mudança de `SelectedKey`.
+When selection changes, an item is considered visible when its entire rectangle fits in the viewport. If it is taller than the viewport, its first row is aligned to the top and the remainder is clipped. Manual wheel scrolling does not force this invariant until the next `SelectedKey` change.
 
-#### Mudanças da árvore e resize
+#### Tree changes and resize
 
-- Se itens forem inseridos ou reordenados, a âncora por chave preserva a região visível sempre que possível.
-- Se o item âncora desaparecer, o runtime usa o item seguinte, depois o anterior, e por fim o topo.
-- Se o item selecionado desaparecer, o componente emite uma proposta para a chave elegível mais próxima; ele não altera `SelectedKey` silenciosamente.
-- Resize recalcula a viewport e limita o offset ao novo intervalo. Se a seleção estava visível antes do resize, ela continua visível; uma seleção já afastada por wheel não causa snap automático.
-- Uma lista vazia zera o offset e renderiza `Empty` sem scrollbar.
+- If items are inserted or reordered, the key anchor preserves the visible region whenever possible.
+- If the anchor item disappears, the runtime uses the next item, then the previous item, and finally the top.
+- If the selected item disappears, the component proposes the nearest eligible key; it does not silently change `SelectedKey`.
+- Resize recalculates the viewport and clamps the offset to the new range. If the selection was visible before resize, it remains visible; a selection already moved away by wheel input does not snap automatically.
+- An empty list resets the offset and renders `Empty` without a scrollbar.
 
-Todos os filhos são reconciliados e medidos no MVP, inclusive os que estão fora da viewport; apenas o paint é recortado. Virtualização fica adiada até existirem benchmarks e uma API específica para itens sob demanda. Wheel integra o MVP; arraste da scrollbar e inércia permanecem adiados.
+All children are reconciled and measured in the MVP, including those outside the viewport; only painting is clipped. Virtualization is deferred until benchmarks and a specific API for on-demand items exist. Wheel input is part of the MVP; scrollbar dragging and inertia remain deferred.
 
-### Exemplo
+### Example
 
 ```go
 type ProjectState struct {
@@ -256,7 +256,7 @@ func renderProjects(ctx omnitui.Context, state ProjectState) omnitui.Element {
             ScrollPadding: 1,
             Scrollbar:     components.ScrollbarAuto,
             Empty: components.Text(components.TextProps{
-                Content: "Nenhum projeto",
+                Content: "No projects",
             }),
             OnChange: func(event omnitui.ValueChangeEvent) omnitui.EventResult {
                 omnitui.UpdateState(ctx, func(current ProjectState) ProjectState {
@@ -275,34 +275,34 @@ func renderProjects(ctx omnitui.Context, state ProjectState) omnitui.Element {
         },
         components.Text(components.TextProps{Content: "OmniTUI"}).WithKey("omnitui"),
         components.Text(components.TextProps{Content: "CLI Tools"}).WithKey("cli-tools"),
-        components.Text(components.TextProps{Content: "Experimentos"}).WithKey("labs"),
-        components.Text(components.TextProps{Content: "Documentação"}).WithKey("docs"),
+        components.Text(components.TextProps{Content: "Experiments"}).WithKey("labs"),
+        components.Text(components.TextProps{Content: "Documentation"}).WithKey("docs"),
         components.Text(components.TextProps{Content: "Benchmarks"}).WithKey("benchmarks"),
-        components.Text(components.TextProps{Content: "Arquivo"}).WithKey("archive"),
+        components.Text(components.TextProps{Content: "Archive"}).WithKey("archive"),
     )
 }
 ```
 
-## 8. Blocos de nível mais baixo
+## 8. Lower-level building blocks
 
-- `Box`: exportado por `components`; é um container configurável com direção, tamanho, padding, gap, alinhamento, borda, estilo e clipping.
-- `Button`: exportado por `components`; é um controle focável com label e `OnPress`.
-- `Fragment`: pertence a `omnitui` e agrupa elementos sem criar layout.
-- `None`: pertence a `omnitui` e representa ausência de elemento.
+- `Box`: exported by `components`; a configurable container with direction, size, padding, gap, alignment, border, style, and clipping.
+- `Button`: exported by `components`; a focusable control with a label and `OnPress`.
+- `Fragment`: belongs to `omnitui` and groups elements without creating layout.
+- `None`: belongs to `omnitui` and represents the absence of an element.
 
-`Row` e `Column` devem ser a escolha usual para layout. `Box` fica disponível quando a direção precisa ser dinâmica ou quando capacidades de nível mais baixo são necessárias.
+`Row` and `Column` should be the usual layout choices. `Box` is available when direction must be dynamic or lower-level capabilities are needed.
 
-## 9. Critérios de aceitação dos builtins
+## 9. Builtin acceptance criteria
 
-1. Todos são exportados por `omnitui/components` e usam o reconciliador do núcleo.
-2. Props e filhos nunca são alterados internamente.
-3. `Row` e `Column` preservam identidade e chaves de seus filhos.
-4. `Text` mede, quebra e trunca corretamente graphemes de largura variável.
-5. `Input` mantém cursor válido quando `Value` muda externamente.
-6. `Tabs` valida chaves e nunca ativa uma aba desabilitada.
-7. `List` preserva âncora e seleção por chave durante inserção e reordenação.
-8. `List` revela o item após mudança de seleção e preserva sua visibilidade no resize quando ele já estava visível.
-9. `List` limita o offset corretamente com itens variáveis, viewport pequena e lista vazia.
-10. `Input`, `Tabs` e `List` respondem a clique; `List` responde a wheel sem alterar a seleção.
-11. Todos os eventos seguem a ordem e propagação definidas em [API.md](API.md).
-12. Todos funcionam no backend headless e possuem exemplos compilados como testes.
+1. All are exported by `omnitui/components` and use the core reconciler.
+2. Props and children are never mutated internally.
+3. `Row` and `Column` preserve the identity and keys of their children.
+4. `Text` correctly measures, wraps, and truncates graphemes with variable width.
+5. `Input` keeps a valid cursor when `Value` changes externally.
+6. `Tabs` validates keys and never activates a disabled tab.
+7. `List` preserves its key anchor and selection during insertion and reordering.
+8. `List` reveals an item after selection changes and preserves its visibility during resize when it was already visible.
+9. `List` correctly clamps its offset with variable-height items, a small viewport, and an empty list.
+10. `Input`, `Tabs`, and `List` respond to clicks; `List` responds to wheel input without changing selection.
+11. All events follow the ordering and propagation defined in [API.md](API.md).
+12. All work with the headless backend and have examples compiled as tests.

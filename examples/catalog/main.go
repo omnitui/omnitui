@@ -13,7 +13,7 @@ type catalog struct{}
 func (catalog) InitialState(string) catalogState { return catalogState{Selected: "omnitui"} }
 func (catalog) Render(ctx omnitui.Context, _ string, state catalogState, _ omnitui.Children) omnitui.Element {
 	return components.Column(components.ColumnProps{Padding: omnitui.All(1), Gap: 1, Style: omnitui.Style{Foreground: omnitui.RGB(224, 228, 238), Background: omnitui.RGB(20, 24, 33)}},
-		components.Text(components.TextProps{Content: "Catálogo de exemplos", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightCyan), Attributes: omnitui.Bold}}),
+		components.Text(components.TextProps{Content: "Example catalog", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightCyan), Attributes: omnitui.Bold}}),
 		components.List(components.ListProps{
 			SelectedKey:   state.Selected,
 			Height:        omnitui.Cells(6),
@@ -27,8 +27,8 @@ func (catalog) Render(ctx omnitui.Context, _ string, state catalogState, _ omnit
 		},
 			components.Text(components.TextProps{Content: "OmniTUI"}).WithKey("omnitui"),
 			components.Text(components.TextProps{Content: "CLI Tools"}).WithKey("cli-tools"),
-			components.Text(components.TextProps{Content: "Experimentos"}).WithKey("labs"),
-			components.Text(components.TextProps{Content: "Documentação"}).WithKey("docs"),
+			components.Text(components.TextProps{Content: "Experiments"}).WithKey("labs"),
+			components.Text(components.TextProps{Content: "Documentation"}).WithKey("docs"),
 			components.Text(components.TextProps{Content: "Benchmarks"}).WithKey("benchmarks"),
 		),
 	)
