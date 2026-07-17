@@ -10,6 +10,7 @@ import (
 	"github.com/viniciusfonseca/omnitui/internal/backend"
 	"github.com/viniciusfonseca/omnitui/internal/backend/headless"
 	"github.com/viniciusfonseca/omnitui/internal/core"
+	"github.com/viniciusfonseca/omnitui/internal/screen"
 )
 
 type probeProps struct{ Value string }
@@ -116,4 +117,47 @@ func TestResizeEventsCoalesce(t *testing.T) {
 	if !reflect.DeepEqual(widths, []int{4}) {
 		t.Fatalf("resize callbacks = %v", widths)
 	}
+}
+
+func TestTabsHorizontalPaddingIsPaintedAndClickable(t *testing.T) {
+	activeStyle := core.Style{
+		Foreground: core.ANSIColorValue(1),
+		Background: core.ANSIColorValue(14),
+	}
+	tabs := &instance{
+		host: core.Host{
+			Kind: core.HostTabs,
+			Data: core.TabsData{
+				Items: []core.TabData{
+					{Key: "one", Label: "One"},
+					{Key: "two", Label: "Two"},
+				},
+				ActiveKey:   "one",
+				ActiveStyle: activeStyle,
+			},
+		},
+		rect: Rect{Width: 10, Height: 1},
+	}
+	data := tabs.host.Data.(core.TabsData)
+	buffer := screen.NewBuffer(10, 1, core.Style{})
+	paintTabs(buffer, tabs, data)
+
+	for _, x := range []int{0, 4} {
+		if got := buffer.Cell(x, 0).Style; got != activeStyle {
+			t.Fatalf("active tab padding at x=%d has style %#v, want %#v", x, got, activeStyle)
+		}
+	}
+	if got := tabsAtForTest(tabs, 0, 0); got != "one" {
+		t.Fatalf("left active padding hit tab %q, want one", got)
+	}
+	if got := tabsAtForTest(tabs, 4, 0); got != "one" {
+		t.Fatalf("right active padding hit tab %q, want one", got)
+	}
+	if got := tabsAtForTest(tabs, 5, 0); got != "two" {
+		t.Fatalf("left inactive padding hit tab %q, want two", got)
+	}
+}
+
+func tabsAtForTest(tabs *instance, x, y int) string {
+	return (&App{}).tabAt(tabs, x, y)
 }

@@ -1,0 +1,4 @@
+interface:
+  display_name: "OmniTUI Interface Builder"
+  short_description: "Build styled, interactive OmniTUI screens"
+  default_prompt: "Use $omnitui-interface-builder to build or improve an interactive OmniTUI interface."

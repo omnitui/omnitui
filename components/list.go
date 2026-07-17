@@ -17,6 +17,7 @@ const (
 
 type ListProps struct {
 	SelectedKey   string
+	Selectable    bool
 	Height        omnitui.Size
 	Gap           int
 	Disabled      bool
@@ -50,8 +51,11 @@ func List(props ListProps, items ...omnitui.Element) omnitui.Element {
 	seen := map[string]struct{}{}
 	for index, item := range items {
 		key := core.KeyOf(item)
-		if key == "" {
+		if props.Selectable && key == "" {
 			panic(fmt.Sprintf("omnitui/components: list item %d has no key", index))
+		}
+		if key == "" {
+			continue
 		}
 		if _, ok := seen[key]; ok {
 			panic(fmt.Sprintf("omnitui/components: duplicate list item key %q", key))
@@ -62,5 +66,5 @@ func List(props ListProps, items ...omnitui.Element) omnitui.Element {
 }
 
 func listHost(props ListProps, items ...omnitui.Element) omnitui.Element {
-	return core.NewHost(core.HostList, core.ListData{SelectedKey: props.SelectedKey, Height: props.Height, Gap: props.Gap, Disabled: props.Disabled, Wrap: props.Wrap, ScrollPadding: props.ScrollPadding, Scrollbar: uint8(props.Scrollbar), Empty: props.Empty, Style: props.Style, SelectedStyle: props.SelectedStyle, Handlers: handlers(map[string]any{"change": props.OnChange, "activate": props.OnActivate, "mouse": props.OnMouse, "wheel": props.OnWheel})}, items)
+	return core.NewHost(core.HostList, core.ListData{SelectedKey: props.SelectedKey, Selectable: props.Selectable, Height: props.Height, Gap: props.Gap, Disabled: props.Disabled, Wrap: props.Wrap, ScrollPadding: props.ScrollPadding, Scrollbar: uint8(props.Scrollbar), Empty: props.Empty, Style: props.Style, SelectedStyle: props.SelectedStyle, Handlers: handlers(map[string]any{"change": props.OnChange, "activate": props.OnActivate, "mouse": props.OnMouse, "wheel": props.OnWheel})}, items)
 }

@@ -10,6 +10,8 @@ import (
 
 const unbounded = 1 << 29
 
+const tabHorizontalPadding = 1
+
 func (app *App) render() error {
 	app.rootInstance = reconcile(nil, app.rootInstance, app.root, nil, app, "root")
 	validateListSelections(app.rootInstance)
@@ -51,6 +53,12 @@ func validateListSelections(root *instance) {
 	}
 	if root.kind() == core.KindHost && root.host.Kind == core.HostList {
 		data, _ := root.host.Data.(core.ListData)
+		if !data.Selectable {
+			for _, child := range root.children {
+				validateListSelections(child)
+			}
+			return
+		}
 		candidate := ""
 		for _, child := range root.children {
 			if key := core.KeyOf(child.element); key != "" {
@@ -174,7 +182,11 @@ func measureHost(i *instance, maxWidth, maxHeight int) (int, int) {
 		}
 		return minInt(width, maxWidth), len(lines)
 	case core.ButtonData:
-		return minInt(uitext.Width(data.Label)+4, maxWidth), 1
+		padding := 0
+		if !data.Plain {
+			padding = 4
+		}
+		return minInt(uitext.Width(data.Label)+padding, maxWidth), 1
 	case core.InputData:
 		width := uitext.Width(data.Value)
 		if width == 0 {
@@ -305,11 +317,11 @@ func arrangeFragmentShells(values []*instance, rect, clip Rect, style Style) {
 func measureTabs(i *instance, data core.TabsData, maxWidth, maxHeight int) (int, int) {
 	headerWidth, headerHeight := 0, 1
 	for _, item := range data.Items {
-		size := uitext.Width(item.Label) + 2
+		size := uitext.Width(item.Label)
 		if data.Orientation == 0 {
-			headerWidth += size
-		} else if size > headerWidth {
-			headerWidth = size
+			headerWidth += size + tabHorizontalPadding*2
+		} else if size+tabHorizontalPadding*2 > headerWidth {
+			headerWidth = size + tabHorizontalPadding*2
 		}
 		if data.Orientation == 1 {
 			headerHeight++
@@ -438,6 +450,41 @@ func arrangeBox(i *instance, data core.BoxData) {
 	if free < 0 {
 		free = 0
 	}
+	if free > 0 {
+		flexGrow := make([]int, len(children))
+		totalGrow := 0
+		for index, child := range children {
+			flexGrow[index] = flexGrowOf(child)
+			totalGrow += flexGrow[index]
+		}
+		if totalGrow > 0 {
+			distributed := 0
+			for index, grow := range flexGrow {
+				if grow == 0 {
+					continue
+				}
+				amount := free * grow / totalGrow
+				distributed += amount
+				if data.Direction == 0 {
+					widths[index] += amount
+				} else {
+					heights[index] += amount
+				}
+			}
+			for index := 0; distributed < free; index = (index + 1) % len(flexGrow) {
+				if flexGrow[index] == 0 {
+					continue
+				}
+				if data.Direction == 0 {
+					widths[index]++
+				} else {
+					heights[index]++
+				}
+				distributed++
+			}
+			free = 0
+		}
+	}
 	lead, between := justify(data.Justify, free, len(children))
 	main := lead
 	for index, child := range children {
@@ -460,6 +507,23 @@ func arrangeBox(i *instance, data core.BoxData) {
 			main += childHeight + data.Gap + between
 		}
 	}
+}
+
+func flexGrowOf(i *instance) int {
+	if i == nil {
+		return 0
+	}
+	switch i.kind() {
+	case core.KindHost:
+		if data, ok := i.host.Data.(core.BoxData); ok {
+			return data.FlexGrow
+		}
+	case core.KindComponent, core.KindProvider, core.KindFragment:
+		if len(i.children) == 1 {
+			return flexGrowOf(i.children[0])
+		}
+	}
+	return 0
 }
 
 func arrangeWrappedBox(children []*instance, data core.BoxData, inner Rect, parent *instance) {
@@ -486,12 +550,39 @@ func arrangeWrappedBox(children []*instance, data core.BoxData, inner Rect, pare
 	}
 	y := inner.Y
 	for _, current := range lines {
+		widths := make([]int, len(current.indexes))
+		totalGrow := 0
+		for position, index := range current.indexes {
+			widths[position], _ = measureNode(children[index], inner.Width, inner.Height)
+			totalGrow += flexGrowOf(children[index])
+		}
 		free := maxInt(inner.Width-current.width, 0)
+		if totalGrow > 0 {
+			distributed := 0
+			for position, index := range current.indexes {
+				grow := flexGrowOf(children[index])
+				if grow == 0 {
+					continue
+				}
+				amount := free * grow / totalGrow
+				widths[position] += amount
+				distributed += amount
+			}
+			for position := 0; distributed < free; position = (position + 1) % len(widths) {
+				if flexGrowOf(children[current.indexes[position]]) == 0 {
+					continue
+				}
+				widths[position]++
+				distributed++
+			}
+			free = 0
+		}
 		lead, between := justify(data.Justify, free, len(current.indexes))
 		x := inner.X + lead
-		for _, index := range current.indexes {
+		for position, index := range current.indexes {
 			child := children[index]
-			width, height := measureNode(child, inner.Width, inner.Height)
+			width := widths[position]
+			_, height := measureNode(child, inner.Width, inner.Height)
 			childY := aligned(y, current.height, height, data.Align)
 			if data.Align == 3 {
 				height = current.height
@@ -517,7 +608,7 @@ func arrangeTabs(i *instance, data core.TabsData) {
 	if data.Orientation == 1 {
 		width := 0
 		for _, item := range data.Items {
-			if value := uitext.Width(item.Label) + 2; value > width {
+			if value := uitext.Width(item.Label) + tabHorizontalPadding*2; value > width {
 				width = value
 			}
 		}
@@ -562,7 +653,10 @@ func arrangeList(i *instance, data core.ListData) {
 	if i.listOffset < 0 {
 		i.listOffset = 0
 	}
-	selected := data.SelectedKey
+	selected := ""
+	if data.Selectable {
+		selected = data.SelectedKey
+	}
 	selectionChanged := selected != i.listLastSelected
 	if selectionChanged {
 		i.listOffset = revealListSelection(i, data, heights, content, i.listOffset)
@@ -615,7 +709,7 @@ func rememberListAnchor(i *instance, data core.ListData, heights []int) {
 }
 
 func revealListSelection(i *instance, data core.ListData, heights []int, content Rect, current int) int {
-	if data.SelectedKey == "" {
+	if !data.Selectable || data.SelectedKey == "" {
 		return current
 	}
 	offset, ok := listItemOffset(i, data.SelectedKey, heights, data.Gap)
@@ -740,7 +834,11 @@ func paintNode(buffer *screen.Buffer, i *instance) {
 		case core.TextData:
 			paintText(buffer, i, data.Content, data.Wrap, data.Align, data.MaxLines, data.Truncate, i.style)
 		case core.ButtonData:
-			paintText(buffer, i, "[ "+data.Label+" ]", 0, 0, 1, 0, i.style)
+			label := data.Label
+			if !data.Plain {
+				label = "[ " + label + " ]"
+			}
+			paintText(buffer, i, label, 0, 0, 1, 0, i.style)
 		case core.InputData:
 			paintInput(buffer, i, data)
 		case core.TabsData:
@@ -861,15 +959,17 @@ func paintInput(buffer *screen.Buffer, i *instance, data core.InputData) {
 func paintTabs(buffer *screen.Buffer, i *instance, data core.TabsData) {
 	x, y := i.rect.X, i.rect.Y
 	for _, item := range data.Items {
-		label := "[ " + item.Label + " ]"
+		label := item.Label
 		style := i.style
 		key := item.Key
 		if key == data.ActiveKey || (data.ActiveKey == "" && firstEnabledTab(data.Items) == key) {
 			style, _ = core.ResolveStyle(style, data.ActiveStyle)
 		}
-		paintGraphemes(buffer, x, y, label, style)
+		paintGraphemes(buffer, x, y, " ", style)
+		paintGraphemes(buffer, x+tabHorizontalPadding, y, label, style)
+		paintGraphemes(buffer, x+tabHorizontalPadding+uitext.Width(label), y, " ", style)
 		if data.Orientation == 0 {
-			x += uitext.Width(label)
+			x += uitext.Width(label) + tabHorizontalPadding*2
 		} else {
 			y++
 		}

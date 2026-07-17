@@ -155,7 +155,7 @@ Displays a tab bar and the active panel. Selection is controlled by `ActiveKey`.
 
 Signature and props: [API.md — `Tabs`](API.md#tabs).
 
-Keys must be unique and stable. `ActiveKey == ""` displays the first enabled tab. A missing or disabled key is a props error. Arrow keys move focus; `Enter`, `Space`, or a left click on a header proposes a new key.
+Keys must be unique and stable. `ActiveKey == ""` displays the first enabled tab. A missing or disabled key is a props error. Arrow keys move focus; `Enter`, `Space`, or a left click on a header proposes a new key. Every header includes one terminal column of horizontal padding on both sides, and that padded area is part of the header hit target.
 
 ### Example
 

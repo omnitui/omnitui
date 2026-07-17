@@ -47,6 +47,7 @@ type BoxProps struct {
 	Width, Height        omnitui.Size
 	MinWidth, MaxWidth   int
 	MinHeight, MaxHeight int
+	FlexGrow             int
 	Padding              omnitui.Spacing
 	Gap                  int
 	Direction            Direction
@@ -71,11 +72,11 @@ type BoxProps struct {
 }
 
 func Box(props BoxProps, children ...omnitui.Element) omnitui.Element {
-	validateBox(props.MinWidth, props.MaxWidth, props.MinHeight, props.MaxHeight, props.Gap, props.Padding)
+	validateBox(props.MinWidth, props.MaxWidth, props.MinHeight, props.MaxHeight, props.FlexGrow, props.Gap, props.Padding)
 	validateStyle(props.Style)
 	return core.NewHost(core.HostBox, core.BoxData{
 		Width: props.Width, Height: props.Height, MinWidth: props.MinWidth, MaxWidth: props.MaxWidth,
-		MinHeight: props.MinHeight, MaxHeight: props.MaxHeight, Padding: props.Padding, Gap: props.Gap,
+		MinHeight: props.MinHeight, MaxHeight: props.MaxHeight, FlexGrow: props.FlexGrow, Padding: props.Padding, Gap: props.Gap,
 		Direction: uint8(props.Direction), Align: uint8(props.Align), Justify: uint8(props.Justify),
 		Wrap: props.Wrap, Clip: props.Clip, Border: uint8(props.Border), Style: props.Style,
 		Focusable: props.Focusable, Disabled: props.Disabled,
@@ -93,9 +94,9 @@ func validateStyle(style omnitui.Style) {
 	}
 }
 
-func validateBox(minWidth, maxWidth, minHeight, maxHeight, gap int, padding omnitui.Spacing) {
-	if minWidth < 0 || maxWidth < 0 || minHeight < 0 || maxHeight < 0 || gap < 0 {
-		panic("omnitui/components: dimensions and gap cannot be negative")
+func validateBox(minWidth, maxWidth, minHeight, maxHeight, flexGrow, gap int, padding omnitui.Spacing) {
+	if minWidth < 0 || maxWidth < 0 || minHeight < 0 || maxHeight < 0 || flexGrow < 0 || gap < 0 {
+		panic("omnitui/components: dimensions, flex grow, and gap cannot be negative")
 	}
 	if minWidth > 0 && maxWidth > 0 && minWidth > maxWidth {
 		panic(fmt.Sprintf("omnitui/components: min width %d exceeds max width %d", minWidth, maxWidth))

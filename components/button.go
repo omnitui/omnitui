@@ -7,6 +7,7 @@ import (
 
 type ButtonProps struct {
 	Label         string
+	Plain         bool
 	Disabled      bool
 	Style         omnitui.Style
 	FocusStyle    omnitui.Style
@@ -35,5 +36,5 @@ func Button(props ButtonProps) omnitui.Element {
 }
 
 func buttonHost(props ButtonProps) omnitui.Element {
-	return core.NewHost(core.HostButton, core.ButtonData{Label: props.Label, Disabled: props.Disabled, Style: props.Style, FocusStyle: props.FocusStyle, DisabledStyle: props.DisabledStyle, Handlers: handlers(map[string]any{"key": props.OnKey, "focus": props.OnFocus, "blur": props.OnBlur, "press": props.OnPress, "mouse": props.OnMouse})}, nil)
+	return core.NewHost(core.HostButton, core.ButtonData{Label: props.Label, Plain: props.Plain, Disabled: props.Disabled, Style: props.Style, FocusStyle: props.FocusStyle, DisabledStyle: props.DisabledStyle, Handlers: handlers(map[string]any{"key": props.OnKey, "focus": props.OnFocus, "blur": props.OnBlur, "press": props.OnPress, "mouse": props.OnMouse})}, nil)
 }

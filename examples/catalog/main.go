@@ -16,6 +16,7 @@ func (catalog) Render(ctx omnitui.Context, _ string, state catalogState, _ omnit
 		components.Text(components.TextProps{Content: "Example catalog", Style: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightCyan), Attributes: omnitui.Bold}}),
 		components.List(components.ListProps{
 			SelectedKey:   state.Selected,
+			Selectable:    true,
 			Height:        omnitui.Cells(6),
 			ScrollPadding: 1,
 			Style:         omnitui.Style{Foreground: omnitui.ANSI(omnitui.White)},

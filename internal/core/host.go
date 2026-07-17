@@ -77,6 +77,7 @@ type BoxData struct {
 	Width, Height        Size
 	MinWidth, MaxWidth   int
 	MinHeight, MaxHeight int
+	FlexGrow             int
 	Padding              Spacing
 	Gap                  int
 	Direction            uint8
@@ -100,6 +101,7 @@ type TextData struct {
 
 type ButtonData struct {
 	Label                            string
+	Plain                            bool
 	Disabled                         bool
 	Style, FocusStyle, DisabledStyle Style
 	Handlers                         Handlers
@@ -132,6 +134,7 @@ type TabsData struct {
 
 type ListData struct {
 	SelectedKey          string
+	Selectable           bool
 	Height               Size
 	Gap                  int
 	Disabled, Wrap       bool

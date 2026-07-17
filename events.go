@@ -202,7 +202,7 @@ func joinGraphemes(values []string) string {
 
 func (app *App) listKey(list *instance, event KeyEvent) bool {
 	data, ok := list.host.Data.(core.ListData)
-	if !ok || data.Disabled {
+	if !ok || data.Disabled || !data.Selectable {
 		return true
 	}
 	if len(list.children) == 0 {
@@ -424,6 +424,10 @@ func (app *App) defaultMouse(target *instance, event MouseEvent) bool {
 			}
 		}
 		if node.hostKind() == core.HostList && event.Action == MouseDown && event.Button == MouseButtonLeft {
+			data, ok := node.host.Data.(core.ListData)
+			if !ok || !data.Selectable {
+				continue
+			}
 			if item := app.listItemAt(node, event.X, event.Y); item != nil {
 				app.emitListChange(node, core.KeyOf(item.element))
 				app.setFocus(node, ProgrammaticFocus)
@@ -575,7 +579,7 @@ func (app *App) tabAt(tabs *instance, x, y int) string {
 	cursor := tabs.rect.X
 	if data.Orientation == 1 {
 		for index, item := range data.Items {
-			width := uitext.Width(item.Label) + 4
+			width := uitext.Width(item.Label) + tabHorizontalPadding*2
 			if y == tabs.rect.Y+index && x >= tabs.rect.X && x < tabs.rect.X+width && !item.Disabled {
 				return item.Key
 			}
@@ -586,7 +590,7 @@ func (app *App) tabAt(tabs *instance, x, y int) string {
 		return ""
 	}
 	for _, item := range data.Items {
-		width := uitext.Width(item.Label) + 4
+		width := uitext.Width(item.Label) + tabHorizontalPadding*2
 		if x >= cursor && x < cursor+width && !item.Disabled {
 			return item.Key
 		}

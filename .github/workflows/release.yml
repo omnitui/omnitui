@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Run unit tests
+        run: go test ./...
+
+  release-please:
+    name: Release Please
+    needs: unit-tests
+    if: ${{ needs.unit-tests.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release PR or GitHub release
+        id: release
+        uses: google-github-actions/release-please-action@v4
+        with:
+          release-type: go
+
+      - name: Checkout code
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: true
+
+      - name: Publish to Go Proxy
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        env:
+          GOPROXY: https://proxy.golang.org
+        run: |
+          module_name=$(go list -m)
+          tag_name="${{ steps.release.outputs.tag_name }}"
+          go list -m "${module_name}@${tag_name}"

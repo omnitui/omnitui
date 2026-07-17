@@ -29,7 +29,7 @@ func (tabsExample) Render(ctx omnitui.Context, _ string, state tabsState, _ omni
 		components.Tabs(components.TabsProps{
 			ActiveKey:   state.ActiveKey,
 			Style:       omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightBlack)},
-			ActiveStyle: omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightCyan), Attributes: omnitui.Bold | omnitui.Underline},
+			ActiveStyle: omnitui.Style{Foreground: omnitui.ANSI(omnitui.Black), Background: omnitui.ANSI(omnitui.BrightCyan), Attributes: omnitui.Bold},
 			Items: []components.TabItem{
 				{
 					Key:   "overview",

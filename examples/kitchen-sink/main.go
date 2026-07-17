@@ -26,8 +26,9 @@ var (
 		Attributes: omnitui.Bold,
 	}
 	activeTabStyle = omnitui.Style{
-		Foreground: omnitui.ANSI(omnitui.BrightYellow),
-		Attributes: omnitui.Bold | omnitui.Underline,
+		Foreground: omnitui.ANSI(omnitui.Black),
+		Background: omnitui.ANSI(omnitui.BrightCyan),
+		Attributes: omnitui.Bold,
 	}
 	inputStyle = omnitui.Style{
 		Foreground: omnitui.ANSI(omnitui.White),
@@ -207,6 +208,7 @@ func listPanel(ctx omnitui.Context, state kitchenState) omnitui.Element {
 		components.List(
 			components.ListProps{
 				SelectedKey:   state.Selected,
+				Selectable:    true,
 				Height:        omnitui.Cells(5),
 				ScrollPadding: 1,
 				Scrollbar:     components.ScrollbarAlways,

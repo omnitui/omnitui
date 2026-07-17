@@ -146,7 +146,7 @@ type listComponent struct{}
 
 func (listComponent) InitialState(string) listState { return listState{Selected: "one"} }
 func (listComponent) Render(ctx omnitui.Context, _ string, state listState, _ omnitui.Children) omnitui.Element {
-	return components.List(components.ListProps{SelectedKey: state.Selected, Height: omnitui.Cells(2), OnChange: func(event omnitui.ValueChangeEvent) omnitui.EventResult {
+	return components.List(components.ListProps{SelectedKey: state.Selected, Selectable: true, Height: omnitui.Cells(2), OnChange: func(event omnitui.ValueChangeEvent) omnitui.EventResult {
 		omnitui.UpdateState(ctx, func(current listState) listState { current.Selected = event.Value; return current })
 		return omnitui.Consume
 	}}, components.Text(components.TextProps{Content: "one"}).WithKey("one"), components.Text(components.TextProps{Content: "two"}).WithKey("two"), components.Text(components.TextProps{Content: "three"}).WithKey("three"))

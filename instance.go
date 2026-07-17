@@ -62,8 +62,10 @@ func (i *instance) focusable() bool {
 	switch data := i.host.Data.(type) {
 	case core.BoxData:
 		return data.Focusable
-	case core.ButtonData, core.InputData, core.TabsData, core.ListData:
+	case core.ButtonData, core.InputData, core.TabsData:
 		return true
+	case core.ListData:
+		return data.Selectable
 	default:
 		return false
 	}

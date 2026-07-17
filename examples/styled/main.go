@@ -24,8 +24,9 @@ var (
 		Foreground: omnitui.ANSI(omnitui.BrightBlack),
 	}
 	activeTabStyle = omnitui.Style{
-		Foreground: omnitui.ANSI(omnitui.BrightCyan),
-		Attributes: omnitui.Bold | omnitui.Underline,
+		Foreground: omnitui.ANSI(omnitui.Black),
+		Background: omnitui.ANSI(omnitui.BrightCyan),
+		Attributes: omnitui.Bold,
 	}
 	inputStyle = omnitui.Style{
 		Foreground: omnitui.ANSI(omnitui.White),
