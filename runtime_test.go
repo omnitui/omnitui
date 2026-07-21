@@ -119,6 +119,50 @@ func TestResizeEventsCoalesce(t *testing.T) {
 	}
 }
 
+func TestFillUsesAvailableSpace(t *testing.T) {
+	tests := []struct {
+		name          string
+		parent        core.BoxData
+		child         core.Element
+		width, height int
+		wantWidth     int
+		wantHeight    int
+	}{
+		{
+			name:   "box",
+			parent: core.BoxData{Padding: core.Spacing{Top: 1, Right: 1, Bottom: 1, Left: 1}},
+			child:  core.NewHost(core.HostBox, core.BoxData{Width: core.FillSize(), Height: core.FillSize()}, nil),
+			width:  10, height: 4,
+			wantWidth: 8, wantHeight: 2,
+		},
+		{
+			name:  "input",
+			child: core.NewHost(core.HostInput, core.InputData{Width: core.FillSize()}, nil),
+			width: 10, height: 4,
+			wantWidth: 10, wantHeight: 1,
+		},
+		{
+			name:  "empty list",
+			child: core.NewHost(core.HostList, core.ListData{Height: core.FillSize()}, nil),
+			width: 10, height: 4,
+			wantWidth: 0, wantHeight: 4,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			app := New(core.NewHost(core.HostBox, test.parent, []core.Element{test.child}), Options{})
+			app.width, app.height = test.width, test.height
+			if err := app.render(); err != nil {
+				t.Fatal(err)
+			}
+			got := app.rootInstance.children[0].rect
+			if got.Width != test.wantWidth || got.Height != test.wantHeight {
+				t.Fatalf("child rect = %#v, want width=%d height=%d", got, test.wantWidth, test.wantHeight)
+			}
+		})
+	}
+}
+
 func TestTabsHorizontalPaddingIsPaintedAndClickable(t *testing.T) {
 	activeStyle := core.Style{
 		Foreground: core.ANSIColorValue(1),

@@ -17,7 +17,10 @@ func Cells(value int) Size {
 	return core.CellsSize(value)
 }
 
+func Fill() Size { return core.FillSize() }
+
 func SizeIsAuto(value Size) bool    { return core.SizeModeOf(value) == core.SizeAuto }
+func SizeIsFill(value Size) bool    { return core.SizeModeOf(value) == core.SizeFill }
 func SizeCellsValue(value Size) int { return core.SizeValueOf(value) }
 
 type Spacing = core.Spacing

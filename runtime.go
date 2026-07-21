@@ -197,6 +197,8 @@ func measureHost(i *instance, maxWidth, maxHeight int) (int, int) {
 		}
 		if core.SizeModeOf(data.Width) == core.SizeCells {
 			width = core.SizeValueOf(data.Width)
+		} else if core.SizeModeOf(data.Width) == core.SizeFill {
+			width = maxWidth
 		}
 		return minInt(width, maxWidth), 1
 	case core.TabsData:
@@ -250,9 +252,13 @@ func measureBox(i *instance, data core.BoxData, maxWidth, maxHeight int) (int, i
 	height += border + data.Padding.Top + data.Padding.Bottom
 	if core.SizeModeOf(data.Width) == core.SizeCells {
 		width = core.SizeValueOf(data.Width)
+	} else if core.SizeModeOf(data.Width) == core.SizeFill {
+		width = maxWidth
 	}
 	if core.SizeModeOf(data.Height) == core.SizeCells {
 		height = core.SizeValueOf(data.Height)
+	} else if core.SizeModeOf(data.Height) == core.SizeFill {
+		height = maxHeight
 	}
 	width = clamp(width, data.MinWidth, data.MaxWidth)
 	height = clamp(height, data.MinHeight, data.MaxHeight)
@@ -339,9 +345,6 @@ func measureTabs(i *instance, data core.TabsData, maxWidth, maxHeight int) (int,
 
 func measureList(i *instance, data core.ListData, maxWidth, maxHeight int) (int, int) {
 	width, height := 0, 0
-	if len(i.children) == 0 {
-		return 0, 0
-	}
 	for index, child := range i.children {
 		childWidth, childHeight := measureNode(child, maxWidth, maxHeight)
 		if childWidth > width {
@@ -354,6 +357,8 @@ func measureList(i *instance, data core.ListData, maxWidth, maxHeight int) (int,
 	}
 	if core.SizeModeOf(data.Height) == core.SizeCells {
 		height = core.SizeValueOf(data.Height)
+	} else if core.SizeModeOf(data.Height) == core.SizeFill {
+		height = maxHeight
 	}
 	return minInt(width, maxWidth), minInt(height, maxHeight)
 }

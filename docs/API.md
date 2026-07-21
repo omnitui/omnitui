@@ -155,6 +155,7 @@ type Size struct {
 
 func Auto() Size
 func Cells(value int) Size
+func Fill() Size
 
 type Spacing struct {
     Top, Right, Bottom, Left int
@@ -170,7 +171,8 @@ type Rect struct {
 
 - The zero value of `Size` is equivalent to `Auto()`.
 - Negative sizes and spacing are invalid.
-- Percentages and flexible units are not part of the MVP.
+- `Fill()` occupies all space available from the parent, after its padding and border, while respecting minimum and maximum dimensions.
+- Percentages and proportional units are not part of the MVP.
 
 ## 7. Styles — `omnitui`
 

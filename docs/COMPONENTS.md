@@ -11,7 +11,7 @@ This document describes the official `Row`, `Column`, `Text`, `Input`, `Tabs`, a
 - `Input`, `Tabs`, and `List` are controlled: the public value comes from props, and events propose changes to the parent component.
 - Internal state stores only interaction details such as the cursor, local focus, and scroll offset.
 - Handlers return `omnitui.Propagate` or `omnitui.Consume` according to the event contract.
-- `omnitui.Cells(n)` creates a cell-sized `Size`; `omnitui.All(n)` creates equal spacing on all four sides.
+- `omnitui.Cells(n)` creates a cell-sized `Size`; `omnitui.Fill()` occupies the space available from the parent; `omnitui.All(n)` creates equal spacing on all four sides.
 - Examples use `omnitui` for the core and `components` for builtins; they represent snippets from a `Render` method and omit error handling.
 
 ```go

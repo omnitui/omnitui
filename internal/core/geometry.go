@@ -8,11 +8,14 @@ type Size struct {
 const (
 	SizeAuto uint8 = iota
 	SizeCells
+	SizeFill
 )
 
 func AutoSize() Size { return Size{} }
 
 func CellsSize(value int) Size { return Size{mode: SizeCells, value: value} }
+
+func FillSize() Size { return Size{mode: SizeFill} }
 
 func SizeModeOf(value Size) uint8 { return value.mode }
 func SizeValueOf(value Size) int  { return value.value }
