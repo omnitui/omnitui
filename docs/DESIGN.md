@@ -19,13 +19,13 @@ The first milestone must prove this model with a small API. Hooks, effects, anim
 
 ## 2. Assumptions and boundaries
 
-1. The first supported platform will be Unix terminals (Linux and macOS) with ANSI/VT100.
+1. Supported platforms are Linux, macOS, and Windows terminals with ANSI/VT100 support. Windows uses virtual terminal processing and polls for console resize changes.
 2. “From scratch” means not wrapping Bubble Tea, tview, or another TUI framework. Small, focused utilities such as `golang.org/x/term` for raw mode and a Unicode width library are acceptable.
 3. All renders and tree mutations will happen on a single runtime-controlled goroutine. Other goroutines may only enqueue messages.
 4. Props and elements are treated as immutable values. The runtime owns mounted state.
 5. The first implementation will reconcile the entire logical tree after an update. Subtree optimizations will be added only when measurements justify them.
 6. Initial layout will be a small flexbox subset: row/column direction, sizing, padding, gap, alignment, and clipping.
-7. Windows, IME, asynchronous effects, and advanced accessibility will be later extensions; SGR mouse is part of the Unix MVP.
+7. IME, asynchronous effects, and advanced accessibility will be later extensions; SGR mouse is part of the MVP where the terminal supports it.
 
 ## 3. Mental model
 
@@ -447,7 +447,7 @@ Completion criterion: the minimal API is stable and bottlenecks are known from b
 - render concorrente;
 - public memoization;
 - portals and overlays outside the normal tree;
-- double-click, semantic drag, scrollbar dragging, direct clipboard access, IME, and Windows;
+- double-click, semantic drag, scrollbar dragging, direct clipboard access, and IME;
 - list virtualization;
 - animations and timers;
 - custom markup or DSL.

@@ -3,26 +3,27 @@ package ansi
 import (
 	"io"
 	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 
 	"github.com/viniciusfonseca/omnitui/internal/backend"
 	"golang.org/x/term"
 )
 
 type Backend struct {
-	input         io.Reader
-	output        io.Writer
-	width, height int
-	events        chan backend.Event
-	done          chan struct{}
-	closeOnce     sync.Once
-	eventsMu      sync.Mutex
-	eventsClosed  bool
-	sizeMu        sync.RWMutex
-	terminal      *os.File
-	state         *term.State
+	input          io.Reader
+	output         io.Writer
+	width, height  int
+	events         chan backend.Event
+	done           chan struct{}
+	closeOnce      sync.Once
+	eventsMu       sync.Mutex
+	eventsClosed   bool
+	sizeMu         sync.RWMutex
+	terminal       *os.File
+	sizeTerminal   *os.File
+	state          *term.State
+	outputTerminal *os.File
+	outputState    *outputState
 }
 
 func New(input io.Reader, output io.Writer) (*Backend, error) {
@@ -35,6 +36,7 @@ func New(input io.Reader, output io.Writer) (*Backend, error) {
 	b := &Backend{input: input, output: output, width: 80, height: 24, events: make(chan backend.Event, 32), done: make(chan struct{})}
 	if file, ok := input.(*os.File); ok && term.IsTerminal(int(file.Fd())) {
 		b.terminal = file
+		b.sizeTerminal = file
 		if width, height, err := term.GetSize(int(file.Fd())); err == nil && width > 0 && height > 0 {
 			b.width, b.height = width, height
 		}
@@ -42,9 +44,24 @@ func New(input io.Reader, output io.Writer) (*Backend, error) {
 			b.state = state
 		}
 	}
+	if file, ok := output.(*os.File); ok && term.IsTerminal(int(file.Fd())) {
+		b.outputTerminal = file
+		b.sizeTerminal = file
+		if width, height, err := term.GetSize(int(file.Fd())); err == nil && width > 0 && height > 0 {
+			b.width, b.height = width, height
+		}
+		state, err := enableVirtualTerminalOutput(file)
+		if err != nil {
+			if b.terminal != nil && b.state != nil {
+				_ = term.Restore(int(b.terminal.Fd()), b.state)
+			}
+			return nil, err
+		}
+		b.outputState = state
+	}
 	_, _ = io.WriteString(output, "\x1b[?1049h\x1b[?25l\x1b[?1000h\x1b[?1002h\x1b[?1006h")
 	go b.readLoop()
-	if b.terminal != nil {
+	if b.sizeTerminal != nil {
 		go b.resizeLoop()
 	}
 	return b, nil
@@ -99,6 +116,9 @@ func (b *Backend) Close() error {
 		if err == nil {
 			err = writeErr
 		}
+		if restoreErr := restoreVirtualTerminalOutput(b.outputTerminal, b.outputState); err == nil {
+			err = restoreErr
+		}
 	})
 	return err
 }
@@ -126,24 +146,17 @@ func (b *Backend) closeEvents() {
 	b.eventsMu.Unlock()
 }
 
-func (b *Backend) resizeLoop() {
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGWINCH)
-	defer signal.Stop(signals)
-	for {
-		select {
-		case <-b.done:
-			return
-		case <-signals:
-			width, height, err := term.GetSize(int(b.terminal.Fd()))
-			if err == nil && width > 0 && height > 0 {
-				b.sizeMu.Lock()
-				b.width, b.height = width, height
-				b.sizeMu.Unlock()
-				if !b.emit(backend.Event{Value: backend.ResizeInput{Width: width, Height: height}}) {
-					return
-				}
-			}
-		}
+func (b *Backend) emitResize() bool {
+	width, height, err := term.GetSize(int(b.sizeTerminal.Fd()))
+	if err != nil || width <= 0 || height <= 0 {
+		return true
 	}
+	b.sizeMu.Lock()
+	changed := width != b.width || height != b.height
+	b.width, b.height = width, height
+	b.sizeMu.Unlock()
+	if !changed {
+		return true
+	}
+	return b.emit(backend.Event{Value: backend.ResizeInput{Width: width, Height: height}})
 }

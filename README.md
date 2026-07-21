@@ -10,7 +10,7 @@ Declarative framework for building terminal interfaces in Go with components, st
 
 OmniTUI turns the interface into a tree of immutable elements. The runtime preserves component state, computes layout, handles events, and sends only changed cells to the terminal.
 
-> The project is at the MVP stage and currently targets Unix terminals on Linux and macOS.
+> The project is at the MVP stage and supports ANSI/VT terminals on Linux, macOS, and Windows.
 
 ## Key features
 
@@ -39,7 +39,7 @@ Arrow keys move focus between headers; `Enter`, `Space`, or a click selects a ta
 
 ## Installation
 
-Requirements: Go 1.22 or later and a Unix terminal with ANSI/VT100 support.
+Requirements: Go 1.22 or later and an ANSI/VT100-compatible terminal. On Windows, use Windows Terminal or a modern Windows console host.
 
 ```bash
 go get github.com/viniciusfonseca/omnitui@latest

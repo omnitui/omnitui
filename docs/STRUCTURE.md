@@ -116,6 +116,9 @@ omnitui/
 │   │   │   ├── mouse_test.go
 │   │   │   ├── raw_unix.go
 │   │   │   ├── resize_unix.go
+│   │   │   ├── resize_windows.go
+│   │   │   ├── vt_other.go
+│   │   │   ├── vt_windows.go
 │   │   │   └── restore_test.go
 │   │   └── headless/
 │   │       ├── backend.go
@@ -273,7 +276,7 @@ type Backend interface {
 }
 ```
 
-- `backend/ansi` implements raw mode, alternate screen, ANSI input, SGR mouse, wheel, resize, and Unix restoration.
+- `backend/ansi` implements raw mode, alternate screen, ANSI input, SGR mouse, wheel, resize, and terminal restoration across Unix and Windows ANSI/VT consoles.
 - `backend/headless` receives synthetic events and captures frames for tests.
 - backends know nothing about `omnitui`, `components`, focus, or state.
 
@@ -418,7 +421,6 @@ Add benchmarks, fuzz tests, and new files only where measurements indicate a nee
 ## 11. Deliberately deferred structures
 
 ```text
-internal/backend/windows/  # native Windows support
 internal/virtual/          # virtualized lists
 internal/animation/        # clock, scheduler, and transitions
 internal/effects/          # lifecycle and cleanup
