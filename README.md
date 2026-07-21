@@ -2,7 +2,7 @@
 
 Declarative framework for building terminal interfaces in Go with components, state, and reconciliation inspired by the React mental model.
 
-[![Go tests](https://github.com/omnitui/omnitui/actions/workflows/go-tests.yml/badge.svg)](https://github.com/omnitui/omnitui/actions/workflows/go-tests.yml)
+[![Go tests](https://github.com/omnitui/omnitui/actions/workflows/release.yml/badge.svg)](https://github.com/omnitui/omnitui/actions/workflows/release.yml)
 [![Go 1.22+](https://img.shields.io/badge/Go-1.22%2B-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
