@@ -1,7 +1,7 @@
 package omnitui
 
 import (
-	"github.com/viniciusfonseca/omnitui/internal/core"
+	"github.com/omnitui/omnitui/internal/core"
 )
 
 type Element = core.Element

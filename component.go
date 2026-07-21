@@ -1,6 +1,6 @@
 package omnitui
 
-import "github.com/viniciusfonseca/omnitui/internal/core"
+import "github.com/omnitui/omnitui/internal/core"
 
 type Component[P, S any] interface {
 	InitialState(props P) S

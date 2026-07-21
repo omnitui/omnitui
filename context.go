@@ -3,7 +3,7 @@ package omnitui
 import (
 	"sync/atomic"
 
-	"github.com/viniciusfonseca/omnitui/internal/core"
+	"github.com/omnitui/omnitui/internal/core"
 )
 
 type Context struct {

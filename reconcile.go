@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/viniciusfonseca/omnitui/internal/core"
+	"github.com/omnitui/omnitui/internal/core"
 )
 
 func reconcile(parent, old *instance, element Element, values map[uint64]any, app *App, path string) *instance {

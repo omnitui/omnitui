@@ -3,8 +3,8 @@ package components
 import (
 	"testing"
 
-	omnitui "github.com/viniciusfonseca/omnitui"
-	"github.com/viniciusfonseca/omnitui/internal/core"
+	omnitui "github.com/omnitui/omnitui"
+	"github.com/omnitui/omnitui/internal/core"
 )
 
 func TestRowAndColumnAreBoxHosts(t *testing.T) {

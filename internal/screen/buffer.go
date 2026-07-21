@@ -1,8 +1,8 @@
 package screen
 
 import (
-	"github.com/viniciusfonseca/omnitui/internal/core"
-	"github.com/viniciusfonseca/omnitui/internal/text"
+	"github.com/omnitui/omnitui/internal/core"
+	"github.com/omnitui/omnitui/internal/text"
 )
 
 type Buffer struct {

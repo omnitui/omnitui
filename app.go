@@ -5,10 +5,10 @@ import (
 	"errors"
 	"sync/atomic"
 
-	"github.com/viniciusfonseca/omnitui/internal/backend"
-	"github.com/viniciusfonseca/omnitui/internal/backend/ansi"
-	"github.com/viniciusfonseca/omnitui/internal/core"
-	"github.com/viniciusfonseca/omnitui/internal/screen"
+	"github.com/omnitui/omnitui/internal/backend"
+	"github.com/omnitui/omnitui/internal/backend/ansi"
+	"github.com/omnitui/omnitui/internal/core"
+	"github.com/omnitui/omnitui/internal/screen"
 )
 
 var ErrInterrupted = errors.New("omnitui: interrupted")

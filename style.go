@@ -3,7 +3,7 @@ package omnitui
 import (
 	"fmt"
 
-	"github.com/viniciusfonseca/omnitui/internal/core"
+	"github.com/omnitui/omnitui/internal/core"
 )
 
 type Color = core.Color

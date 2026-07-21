@@ -5,7 +5,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/viniciusfonseca/omnitui/internal/backend"
+	"github.com/omnitui/omnitui/internal/backend"
 	"golang.org/x/term"
 )
 

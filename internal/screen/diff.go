@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/viniciusfonseca/omnitui/internal/core"
+	"github.com/omnitui/omnitui/internal/core"
 )
 
 // Diff emits only changed cells and groups adjacent changes on each row.

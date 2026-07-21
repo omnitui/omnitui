@@ -3,9 +3,9 @@ package omnitui
 import (
 	"strings"
 
-	"github.com/viniciusfonseca/omnitui/internal/core"
-	"github.com/viniciusfonseca/omnitui/internal/screen"
-	uitext "github.com/viniciusfonseca/omnitui/internal/text"
+	"github.com/omnitui/omnitui/internal/core"
+	"github.com/omnitui/omnitui/internal/screen"
+	uitext "github.com/omnitui/omnitui/internal/text"
 )
 
 const unbounded = 1 << 29

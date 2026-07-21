@@ -2,7 +2,7 @@
 
 Declarative framework for building terminal interfaces in Go with components, state, and reconciliation inspired by the React mental model.
 
-[![Go tests](https://github.com/viniciusfonseca/omnitui/actions/workflows/go-tests.yml/badge.svg)](https://github.com/viniciusfonseca/omnitui/actions/workflows/go-tests.yml)
+[![Go tests](https://github.com/omnitui/omnitui/actions/workflows/go-tests.yml/badge.svg)](https://github.com/omnitui/omnitui/actions/workflows/go-tests.yml)
 [![Go 1.22+](https://img.shields.io/badge/Go-1.22%2B-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -42,7 +42,7 @@ Arrow keys move focus between headers; `Enter`, `Space`, or a click selects a ta
 Requirements: Go 1.22 or later and an ANSI/VT100-compatible terminal. On Windows, use Windows Terminal or a modern Windows console host.
 
 ```bash
-go get github.com/viniciusfonseca/omnitui@latest
+go get github.com/omnitui/omnitui@latest
 ```
 
 ## Minimal example
@@ -56,8 +56,8 @@ import (
 	"context"
 	"fmt"
 
-	omnitui "github.com/viniciusfonseca/omnitui"
-	"github.com/viniciusfonseca/omnitui/components"
+	omnitui "github.com/omnitui/omnitui"
+	"github.com/omnitui/omnitui/components"
 )
 
 type counterState struct {

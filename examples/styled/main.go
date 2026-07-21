@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 
-	omnitui "github.com/viniciusfonseca/omnitui"
-	"github.com/viniciusfonseca/omnitui/components"
+	omnitui "github.com/omnitui/omnitui"
+	"github.com/omnitui/omnitui/components"
 )
 
 var (

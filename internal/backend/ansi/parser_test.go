@@ -3,7 +3,7 @@ package ansi
 import (
 	"testing"
 
-	"github.com/viniciusfonseca/omnitui/internal/backend"
+	"github.com/omnitui/omnitui/internal/backend"
 )
 
 func TestParserRecognizesKeyboardSequences(t *testing.T) {

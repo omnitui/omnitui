@@ -16,8 +16,8 @@ This document describes the official `Row`, `Column`, `Text`, `Input`, `Tabs`, a
 
 ```go
 import (
-    omnitui "github.com/viniciusfonseca/omnitui"
-    components "github.com/viniciusfonseca/omnitui/components"
+    omnitui "github.com/omnitui/omnitui"
+    components "github.com/omnitui/omnitui/components"
 )
 ```
 

@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/viniciusfonseca/omnitui/internal/backend"
+	"github.com/omnitui/omnitui/internal/backend"
 )
 
 func parseMouse(value string) (any, bool) {

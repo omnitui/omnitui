@@ -3,8 +3,8 @@ package components
 import (
 	"fmt"
 
-	"github.com/viniciusfonseca/omnitui"
-	"github.com/viniciusfonseca/omnitui/internal/core"
+	"github.com/omnitui/omnitui"
+	"github.com/omnitui/omnitui/internal/core"
 )
 
 type ScrollbarMode uint8

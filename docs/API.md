@@ -6,15 +6,15 @@ This document is the canonical source for the framework’s public API. Internal
 
 ```go
 import (
-    omnitui "github.com/viniciusfonseca/omnitui"
-    components "github.com/viniciusfonseca/omnitui/components"
+    omnitui "github.com/omnitui/omnitui"
+    components "github.com/omnitui/omnitui/components"
 )
 ```
 
 - `omnitui`: elements, components, state, context, runtime, events, geometry, and styles.
 - `omnitui/components`: `Box`, `Row`, `Column`, `Text`, `Button`, `Input`, `Tabs`, and `List`.
 
-The module path is `github.com/viniciusfonseca/omnitui`, as defined in `go.mod`.
+The module path is `github.com/omnitui/omnitui`, as defined in `go.mod`.
 
 ## 2. Elements and components — `omnitui`
 

@@ -1,4 +1,4 @@
-module github.com/viniciusfonseca/omnitui
+module github.com/omnitui/omnitui
 
 go 1.22
 

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/viniciusfonseca/omnitui/internal/core"
+	"github.com/omnitui/omnitui/internal/core"
 )
 
 func TestDiffSkipsUnchangedCells(t *testing.T) {
