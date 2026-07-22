@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/omnitui/omnitui/compare/v1.2.0...v2.0.0) (2026-07-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* add hooks
+
+### Features
+
+* add hooks ([8db5fef](https://github.com/omnitui/omnitui/commit/8db5fef4c113c562da5e90536126810bc6a67588))
+
 ## [1.2.0](https://github.com/omnitui/omnitui/compare/v1.1.0...v1.2.0) (2026-07-21)
 
 
