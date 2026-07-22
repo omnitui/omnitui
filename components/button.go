@@ -12,6 +12,7 @@ type ButtonProps struct {
 	Style         omnitui.Style
 	FocusStyle    omnitui.Style
 	DisabledStyle omnitui.Style
+	Focus         omnitui.FocusHandle
 	OnKey         omnitui.EventHandler[omnitui.KeyEvent]
 	OnFocus       omnitui.EventHandler[omnitui.FocusEvent]
 	OnBlur        omnitui.EventHandler[omnitui.BlurEvent]
@@ -36,5 +37,5 @@ func Button(props ButtonProps) omnitui.Element {
 }
 
 func buttonHost(props ButtonProps) omnitui.Element {
-	return core.NewHost(core.HostButton, core.ButtonData{Label: props.Label, Plain: props.Plain, Disabled: props.Disabled, Style: props.Style, FocusStyle: props.FocusStyle, DisabledStyle: props.DisabledStyle, Handlers: handlers(map[string]any{"key": props.OnKey, "focus": props.OnFocus, "blur": props.OnBlur, "press": props.OnPress, "mouse": props.OnMouse})}, nil)
+	return core.NewHost(core.HostButton, core.ButtonData{Label: props.Label, Plain: props.Plain, Disabled: props.Disabled, Style: props.Style, FocusStyle: props.FocusStyle, DisabledStyle: props.DisabledStyle, Focus: props.Focus, Handlers: handlers(map[string]any{"key": props.OnKey, "focus": props.OnFocus, "blur": props.OnBlur, "press": props.OnPress, "mouse": props.OnMouse})}, nil)
 }

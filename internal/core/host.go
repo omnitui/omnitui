@@ -87,6 +87,7 @@ type BoxData struct {
 	Border               uint8
 	Style                Style
 	Focusable, Disabled  bool
+	Focus                any
 	Handlers             Handlers
 }
 
@@ -104,6 +105,7 @@ type ButtonData struct {
 	Plain                            bool
 	Disabled                         bool
 	Style, FocusStyle, DisabledStyle Style
+	Focus                            any
 	Handlers                         Handlers
 }
 
@@ -114,6 +116,7 @@ type InputData struct {
 	Mask               rune
 	MaxLength          int
 	Style, FocusStyle  Style
+	Focus              any
 	Handlers           Handlers
 }
 
@@ -129,6 +132,7 @@ type TabsData struct {
 	ActiveKey          string
 	Orientation        uint8
 	Style, ActiveStyle Style
+	Focus              any
 	Handlers           Handlers
 }
 
@@ -142,5 +146,6 @@ type ListData struct {
 	Scrollbar            uint8
 	Empty                Element
 	Style, SelectedStyle Style
+	Focus                any
 	Handlers             Handlers
 }

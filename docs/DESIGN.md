@@ -15,7 +15,7 @@ Build a Go TUI framework inspired by the React mental model, in which:
 - the public `components` package includes `Row`, `Column`, `Text`, `Input`, `Tabs`, and `List` as official builtins;
 - the screen is updated by buffer diffing without redrawing the entire terminal.
 
-The first milestone must prove this model with a small API. Hooks, effects, animations, concurrent rendering, and a complete imitation of CSS are outside the MVP.
+The first milestone must prove this model with a small API. Animations, concurrent rendering, and a complete imitation of CSS remain outside the MVP; keyed hooks provide lifecycle effects, synchronized refs, viewport reads, and programmatic focus.
 
 ## 2. Assumptions and boundaries
 
@@ -25,7 +25,7 @@ The first milestone must prove this model with a small API. Hooks, effects, anim
 4. Props and elements are treated as immutable values. The runtime owns mounted state.
 5. The first implementation will reconcile the entire logical tree after an update. Subtree optimizations will be added only when measurements justify them.
 6. Initial layout will be a small flexbox subset: row/column direction, sizing, padding, gap, alignment, and clipping.
-7. IME, asynchronous effects, and advanced accessibility will be later extensions; SGR mouse is part of the MVP where the terminal supports it.
+7. IME and advanced accessibility will be later extensions; asynchronous work is started by committed effects, and SGR mouse is supported where the terminal provides it.
 
 ## 3. Mental model
 
@@ -36,7 +36,7 @@ Immutable elements           Mounted instances           Physical output
 (what the user wants)    ->  (identity + state)      ->  (cell buffer)
 
 Component / Box / Text       componentInstance            Cell[x,y]
-props / key / children       state / context / host       rune / width / style
+props / key / children       state / hooks / host         rune / width / style
 ```
 
 - **Element:** cheap, disposable description created during `Render`.
@@ -133,7 +133,7 @@ For a reused host node:
 2. reconcile children;
 3. produce or update the node used by layout.
 
-The MVP will have no public lifecycle. Internally, unmounting invalidates the instance dispatcher and removes its handlers/focus. A cleanup API should only be introduced together with asynchronous effects in a later phase.
+Lifecycle is exposed declaratively through keyed hooks. `UseEffect` records intent during `Render`; setup runs only after a successful commit. A changed dependency, a missing hook, unmount, or `App.Run` exit cancels the effect context and invokes cleanup. Refs and focus handles are also scoped to the mounted component instance.
 
 ### Pseudocode
 
@@ -155,7 +155,9 @@ reconcile(parent, oldInstance, newElement, inheritedContext):
 
     if oldInstance is Component:
         apply queued state updates
+        begin keyed hook registration
         output = component.Render(contextFor(oldInstance), props, state, children)
+        finish keyed hook registration
         reconcile oldInstance.rendered with output
 
     if oldInstance is Host:
@@ -189,6 +191,9 @@ input / resize / SetState
           |
           v
         terminal
+          |
+          v
+  committed effect cleanup/setup
 ```
 
 ### Screen buffer
@@ -251,7 +256,7 @@ for app is running:
     flush screen diff
 ```
 
-Only the runtime goroutine touches instances, layout, and buffers. Terminal readers and external producers publish values to channels. Handlers run serially; synchronous updates produced by the same event are drained before reconciliation and appear together in the next frame.
+Only the runtime goroutine touches instances, layout, and buffers. Terminal readers and external producers publish values to channels. Handlers run serially; synchronous updates produced by the same event are drained before reconciliation and appear together in the next frame. Effect setup and cleanup run serially after commit; effect goroutines publish state through the existing dispatcher. `Ref` synchronizes its value without scheduling a frame.
 
 The runtime maintains focus order derived from the visible host tree. Unmounting or disabling the focused node chooses the next valid candidate; resize invalidates layout and paint without reinitializing components.
 
@@ -324,6 +329,8 @@ The core must be testable without a real terminal.
 - text, paste, change, submit, and activation follow the order declared in [API.md](API.md).
 - resizes are coalesced and external messages preserve order.
 - resize preserves state and recalculates layout.
+- effects run after commit, retain equal dependencies, cancel before cleanup, and clean up on omission, unmount, and runtime exit;
+- refs preserve identity per key without invalidating, viewport reads follow resize, and focus handles request and release their bound host;
 - measure/layout respects constraints, clipping, and Unicode.
 - diff generates ANSI only for changed cells.
 - `Row` and `Column` convert their props to `Box` without changing child identity.
@@ -441,8 +448,6 @@ Completion criterion: the minimal API is stable and bottlenecks are known from b
 
 ## 15. Deliberately deferred decisions
 
-- hooks (`UseState`, `UseEffect`);
-- lifecycle and cleanup effects;
 - asynchronous components or suspense;
 - render concorrente;
 - public memoization;

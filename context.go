@@ -10,6 +10,7 @@ type Context struct {
 	instance   *instance
 	dispatcher *dispatcher
 	values     map[uint64]any
+	rendering  *atomic.Bool
 }
 
 type ContextKey[T any] struct {

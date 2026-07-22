@@ -15,6 +15,7 @@ type InputProps struct {
 	MaxLength   int
 	Style       omnitui.Style
 	FocusStyle  omnitui.Style
+	Focus       omnitui.FocusHandle
 	OnChange    omnitui.EventHandler[omnitui.ValueChangeEvent]
 	OnSubmit    omnitui.EventHandler[omnitui.SubmitEvent]
 	OnKey       omnitui.EventHandler[omnitui.KeyEvent]
@@ -44,5 +45,5 @@ func Input(props InputProps) omnitui.Element {
 }
 
 func inputHost(props InputProps) omnitui.Element {
-	return core.NewHost(core.HostInput, core.InputData{Value: props.Value, Placeholder: props.Placeholder, Width: props.Width, Disabled: props.Disabled, ReadOnly: props.ReadOnly, Mask: props.Mask, MaxLength: props.MaxLength, Style: props.Style, FocusStyle: props.FocusStyle, Handlers: handlers(map[string]any{"change": props.OnChange, "submit": props.OnSubmit, "key": props.OnKey, "text": props.OnTextInput, "paste": props.OnPaste, "focus": props.OnFocus, "blur": props.OnBlur, "mouse": props.OnMouse})}, nil)
+	return core.NewHost(core.HostInput, core.InputData{Value: props.Value, Placeholder: props.Placeholder, Width: props.Width, Disabled: props.Disabled, ReadOnly: props.ReadOnly, Mask: props.Mask, MaxLength: props.MaxLength, Style: props.Style, FocusStyle: props.FocusStyle, Focus: props.Focus, Handlers: handlers(map[string]any{"change": props.OnChange, "submit": props.OnSubmit, "key": props.OnKey, "text": props.OnTextInput, "paste": props.OnPaste, "focus": props.OnFocus, "blur": props.OnBlur, "mouse": props.OnMouse})}, nil)
 }

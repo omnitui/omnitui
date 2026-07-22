@@ -3,6 +3,7 @@ package omnitui
 import (
 	"fmt"
 	"reflect"
+	"sync/atomic"
 
 	"github.com/omnitui/omnitui/internal/core"
 )
@@ -33,12 +34,15 @@ func reconcile(parent, old *instance, element Element, values map[uint64]any, ap
 		}
 		applyPending(current)
 		children := core.ChildrenOf(element)
-		context := Context{instance: current, dispatcher: app.dispatcher, values: cloneContextValues(values)}
-		current.rendering.Store(true)
+		rendering := &atomic.Bool{}
+		context := Context{instance: current, dispatcher: app.dispatcher, values: cloneContextValues(values), rendering: rendering}
+		rendering.Store(true)
 		var output Element
 		func() {
-			defer current.rendering.Store(false)
+			defer rendering.Store(false)
+			current.beginHooks()
 			output = current.def.Render(context, current.props, current.state, Children(children))
+			current.finishHooks()
 		}()
 		current.children = reconcileChildren(current, current.children, []Element{output}, values, app, path+"/render")
 	case core.KindProvider:
@@ -52,10 +56,12 @@ func reconcile(parent, old *instance, element Element, values map[uint64]any, ap
 	case core.KindFragment:
 		current.children = reconcileChildren(current, current.children, core.ChildrenOf(element), values, app, path)
 	case core.KindHost:
+		previousFocus := focusBindingOf(current)
 		if old != nil && old.host.Kind == core.HostList {
 			captureListAnchor(old)
 		}
 		current.host, _ = core.HostOf(element)
+		syncFocusedBinding(current, previousFocus)
 		current.children = reconcileChildren(current, current.children, logicalHostChildren(current.host), values, app, path)
 	}
 	return current
@@ -181,9 +187,15 @@ func unmount(i *instance) {
 	}
 	i.mounted = false
 	if i.app != nil {
+		i.app.queueEffectCleanup(i)
+		for _, binding := range i.focusHandles {
+			binding.active.Store(false)
+			binding.focused.Store(false)
+		}
+		i.focusHandles = nil
+		i.refs = nil
 		if i.app.focused == i {
-			dispatchDirect(i, "blur", BlurEvent{Cause: ElementRemoved})
-			i.app.focused = nil
+			i.app.setFocus(nil, ElementRemoved)
 			i.app.focusLost = true
 		}
 		if i.app.capture == i {

@@ -624,8 +624,7 @@ func (app *App) recoverFocus() {
 	if app.focused == nil && app.focusLost {
 		values := app.focusables()
 		if len(values) > 0 {
-			app.focused = values[0]
-			dispatchDirect(app.focused, "focus", FocusEvent{Cause: ElementRemoved})
+			app.setFocus(values[0], ElementRemoved)
 		}
 		app.focusLost = false
 		return
@@ -635,8 +634,6 @@ func (app *App) recoverFocus() {
 	}
 	if app.focused != nil {
 		previous := app.focused
-		dispatchDirect(previous, "blur", BlurEvent{Cause: ElementRemoved})
-		app.focused = nil
 		values := app.focusables()
 		var next *instance
 		for _, candidate := range values {
@@ -645,10 +642,7 @@ func (app *App) recoverFocus() {
 				break
 			}
 		}
-		if next != nil {
-			dispatchDirect(next, "focus", FocusEvent{Cause: ElementRemoved})
-		}
-		app.focused = next
+		app.setFocus(next, ElementRemoved)
 	}
 }
 func (app *App) focusables() []*instance {
@@ -700,10 +694,16 @@ func (app *App) setFocus(next *instance, cause FocusCause) {
 		return
 	}
 	if app.focused != nil {
+		if binding := focusBindingOf(app.focused); binding != nil {
+			binding.focused.Store(false)
+		}
 		dispatchDirect(app.focused, "blur", BlurEvent{Cause: cause})
 	}
 	app.focused = next
 	if next != nil {
+		if binding := focusBindingOf(next); binding != nil {
+			binding.focused.Store(true)
+		}
 		dispatchDirect(next, "focus", FocusEvent{Cause: cause})
 	}
 	app.invalidated = true

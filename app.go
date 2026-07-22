@@ -16,26 +16,29 @@ var ErrInterrupted = errors.New("omnitui: interrupted")
 type dispatcher struct{ enqueue func(func()) }
 
 type App struct {
-	root            Element
-	options         Options
-	work            chan func()
-	dispatcher      *dispatcher
-	running         atomic.Bool
-	invalidated     bool
-	rootInstance    *instance
-	focused         *instance
-	capture         *instance
-	pressTarget     *instance
-	hoverPath       []*instance
-	width, height   int
-	front, back     *screen.Buffer
-	pendingMessages []any
-	backend         backend.Backend
-	backendFactory  func() (backend.Backend, error)
-	interrupted     bool
-	focusLost       bool
-	backendQueue    []any
-	backendClosed   bool
+	root                  Element
+	options               Options
+	work                  chan func()
+	dispatcher            *dispatcher
+	running               atomic.Bool
+	invalidated           bool
+	rootInstance          *instance
+	focused               *instance
+	capture               *instance
+	pressTarget           *instance
+	hoverPath             []*instance
+	width, height         int
+	front, back           *screen.Buffer
+	pendingMessages       []any
+	backend               backend.Backend
+	backendFactory        func() (backend.Backend, error)
+	interrupted           bool
+	focusLost             bool
+	backendQueue          []any
+	backendClosed         bool
+	effectContext         context.Context
+	effectInstances       []*instance
+	pendingEffectCleanups []*effectSlot
 }
 
 func New(root Element, options Options) *App {
@@ -57,15 +60,21 @@ func (app *App) Run(ctx context.Context) (err error) {
 	app.backendClosed = false
 	app.backendQueue = nil
 	app.interrupted = false
+	app.effectContext = ctx
 	defer func() {
+		recovered := recover()
+		cleanupPanic := app.shutdownEffects()
 		app.running.Store(false)
 		var closeErr error
 		if app.backend != nil {
 			closeErr = app.backend.Close()
 			app.backend = nil
 		}
-		if recovered := recover(); recovered != nil {
+		if recovered != nil {
 			panic(recovered)
+		}
+		if cleanupPanic != nil {
+			panic(cleanupPanic)
 		}
 		if err == nil && closeErr != nil {
 			err = closeErr

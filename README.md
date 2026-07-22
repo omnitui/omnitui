@@ -14,7 +14,7 @@ OmniTUI turns the interface into a tree of immutable elements. The runtime prese
 
 ## Key features
 
-- **Declarative components:** typed props, local state, context, children, and composition.
+- **Declarative components:** typed props, local state, context, keyed effects and refs, children, and composition.
 - **Predictable reconciliation:** identity by type, position, and key, preserving state across compatible renders.
 - **Ready-to-use builtins:** `Box`, `Row`, `Column`, `Text`, `Button`, `Input`, `Tabs`, and `List`.
 - **Terminal layout:** horizontal or vertical direction, sizing, padding, gap, alignment, wrapping, clipping, and borders.
@@ -121,6 +121,7 @@ go run .
 | [Catalog](examples/catalog/main.go) | Controlled list, selection, and scrolling | `go run ./examples/catalog` |
 | [Form](examples/form/main.go) | Controlled input, focus, and submit | `go run ./examples/form` |
 | [Counter](examples/counter/main.go) | Local state and button events | `go run ./examples/counter` |
+| [Hooks](examples/hooks/main.go) | Context, effects, refs, viewport, and programmatic focus | `go run ./examples/hooks` |
 
 Common controls:
 

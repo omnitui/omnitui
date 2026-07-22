@@ -2,7 +2,6 @@ package omnitui
 
 import (
 	"fmt"
-	"sync/atomic"
 
 	"github.com/omnitui/omnitui/internal/core"
 )
@@ -18,7 +17,14 @@ type instance struct {
 	props               any
 	state               any
 	pending             []stateUpdate
-	rendering           atomic.Bool
+	effects             map[string]*effectSlot
+	effectOrder         []string
+	pendingEffects      map[string]pendingEffect
+	pendingEffectOrder  []string
+	refs                map[string]any
+	seenRefs            map[string]struct{}
+	focusHandles        map[string]*focusBinding
+	seenFocus           map[string]struct{}
 	host                core.Host
 	rect                Rect
 	clip                Rect

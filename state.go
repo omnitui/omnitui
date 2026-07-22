@@ -33,7 +33,7 @@ func enqueueState(ctx Context, update stateUpdate) {
 	if ctx.instance == nil || ctx.dispatcher == nil {
 		panic("omnitui: state update outside component render")
 	}
-	if ctx.instance.rendering.Load() {
+	if ctx.rendering != nil && ctx.rendering.Load() {
 		panic(fmt.Sprintf("omnitui: state update during Render at %s", ctx.instance.path))
 	}
 	ctx.dispatcher.enqueue(func() {

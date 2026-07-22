@@ -26,6 +26,7 @@ type TabsProps struct {
 	Orientation Orientation
 	Style       omnitui.Style
 	ActiveStyle omnitui.Style
+	Focus       omnitui.FocusHandle
 	OnChange    omnitui.EventHandler[omnitui.ValueChangeEvent]
 }
 
@@ -80,5 +81,5 @@ func tabsHost(props TabsProps) omnitui.Element {
 	for index, item := range props.Items {
 		items[index] = core.TabData{Key: item.Key, Label: item.Label, Content: item.Content, Disabled: item.Disabled}
 	}
-	return core.NewHost(core.HostTabs, core.TabsData{Items: items, ActiveKey: props.ActiveKey, Orientation: uint8(props.Orientation), Style: props.Style, ActiveStyle: props.ActiveStyle, Handlers: handlers(map[string]any{"change": props.OnChange})}, nil)
+	return core.NewHost(core.HostTabs, core.TabsData{Items: items, ActiveKey: props.ActiveKey, Orientation: uint8(props.Orientation), Style: props.Style, ActiveStyle: props.ActiveStyle, Focus: props.Focus, Handlers: handlers(map[string]any{"change": props.OnChange})}, nil)
 }

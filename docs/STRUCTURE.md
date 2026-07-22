@@ -58,6 +58,11 @@ omnitui/
 ├── component.go
 ├── context.go
 ├── state.go
+├── hooks.go
+├── effect.go
+├── ref.go
+├── viewport.go
+├── focus_hook.go
 ├── event.go
 ├── event_key.go
 ├── event_mouse.go
@@ -150,6 +155,8 @@ omnitui/
 ├── examples/
 │   ├── counter/
 │   │   └── main.go
+│   ├── hooks/
+│   │   └── main.go
 │   ├── form/
 │   │   └── main.go
 │   └── catalog/
@@ -190,6 +197,11 @@ The canonical list of public types, functions, and behavior is in [API.md](API.m
 | `component.go` | `Component`, `ComponentType`, `Define`, and `Create` |
 | `context.go` | Render context and typed providers |
 | `state.go` | `SetState`, `UpdateState`, and pending updates |
+| `hooks.go` | Hook call validation and per-render registration |
+| `effect.go` | Post-commit effects, dependency comparison, cancellation, and cleanup |
+| `ref.go` | Synchronized instance refs that do not invalidate rendering |
+| `viewport.go` | Current terminal dimensions for responsive rendering |
+| `focus_hook.go` | Keyed focus handles and host bindings |
 | `event.go` | Events, handlers, `Propagate`, and `Consume` |
 | `event_key.go` | Public keys, runes, and modifiers |
 | `event_mouse.go` | Actions, buttons, coordinates, `MouseEvent`, and `WheelEvent` |
@@ -423,7 +435,6 @@ Add benchmarks, fuzz tests, and new files only where measurements indicate a nee
 ```text
 internal/virtual/          # virtualized lists
 internal/animation/        # clock, scheduler, and transitions
-internal/effects/          # lifecycle and cleanup
 ```
 
 These names are conceptual markers, not reserved directories.

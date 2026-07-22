@@ -13,7 +13,9 @@ const unbounded = 1 << 29
 const tabHorizontalPadding = 1
 
 func (app *App) render() error {
+	app.effectInstances = app.effectInstances[:0]
 	app.rootInstance = reconcile(nil, app.rootInstance, app.root, nil, app, "root")
+	validateFocusBindings(app.rootInstance)
 	validateListSelections(app.rootInstance)
 	rootRect := Rect{Width: app.width, Height: app.height}
 	if app.rootInstance != nil {
@@ -44,6 +46,7 @@ func (app *App) render() error {
 	app.front = app.back
 	app.back = nil
 	app.invalidated = false
+	app.commitEffects()
 	return nil
 }
 

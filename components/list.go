@@ -27,6 +27,7 @@ type ListProps struct {
 	Empty         omnitui.Element
 	Style         omnitui.Style
 	SelectedStyle omnitui.Style
+	Focus         omnitui.FocusHandle
 	OnChange      omnitui.EventHandler[omnitui.ValueChangeEvent]
 	OnActivate    omnitui.EventHandler[omnitui.ActivateEvent]
 	OnMouse       omnitui.EventHandler[omnitui.MouseEvent]
@@ -66,5 +67,5 @@ func List(props ListProps, items ...omnitui.Element) omnitui.Element {
 }
 
 func listHost(props ListProps, items ...omnitui.Element) omnitui.Element {
-	return core.NewHost(core.HostList, core.ListData{SelectedKey: props.SelectedKey, Selectable: props.Selectable, Height: props.Height, Gap: props.Gap, Disabled: props.Disabled, Wrap: props.Wrap, ScrollPadding: props.ScrollPadding, Scrollbar: uint8(props.Scrollbar), Empty: props.Empty, Style: props.Style, SelectedStyle: props.SelectedStyle, Handlers: handlers(map[string]any{"change": props.OnChange, "activate": props.OnActivate, "mouse": props.OnMouse, "wheel": props.OnWheel})}, items)
+	return core.NewHost(core.HostList, core.ListData{SelectedKey: props.SelectedKey, Selectable: props.Selectable, Height: props.Height, Gap: props.Gap, Disabled: props.Disabled, Wrap: props.Wrap, ScrollPadding: props.ScrollPadding, Scrollbar: uint8(props.Scrollbar), Empty: props.Empty, Style: props.Style, SelectedStyle: props.SelectedStyle, Focus: props.Focus, Handlers: handlers(map[string]any{"change": props.OnChange, "activate": props.OnActivate, "mouse": props.OnMouse, "wheel": props.OnWheel})}, items)
 }

@@ -11,6 +11,7 @@ This document describes the official `Row`, `Column`, `Text`, `Input`, `Tabs`, a
 - `Input`, `Tabs`, and `List` are controlled: the public value comes from props, and events propose changes to the parent component.
 - Internal state stores only interaction details such as the cursor, local focus, and scroll offset.
 - Handlers return `omnitui.Propagate` or `omnitui.Consume` according to the event contract.
+- `UseFocus` handles attach through the `Focus` prop of `Box`, `Button`, `Input`, `Tabs`, and `List`; a `Box` must also set `Focusable`, and a `List` must set `Selectable`.
 - `omnitui.Cells(n)` creates a cell-sized `Size`; `omnitui.Fill()` occupies the space available from the parent; `omnitui.All(n)` creates equal spacing on all four sides.
 - Examples use `omnitui` for the core and `components` for builtins; they represent snippets from a `Render` method and omit error handling.
 
@@ -291,6 +292,31 @@ func renderProjects(ctx omnitui.Context, state ProjectState) omnitui.Element {
 - `None`: belongs to `omnitui` and represents the absence of an element.
 
 `Row` and `Column` should be the usual layout choices. `Box` is available when direction must be dynamic or lower-level capabilities are needed.
+
+### Programmatic focus
+
+Create a focus handle during `Render`, attach it to one focusable control, and request focus from an event handler or effect:
+
+```go
+searchFocus := omnitui.UseFocus(ctx, "search")
+
+return components.Column(
+    components.ColumnProps{Gap: 1},
+    components.Input(components.InputProps{
+        Value: state.Query,
+        Focus: searchFocus,
+    }),
+    components.Button(components.ButtonProps{
+        Label: "Focus search",
+        OnPress: func(omnitui.PressEvent) omnitui.EventResult {
+            searchFocus.Request()
+            return omnitui.Consume
+        },
+    }),
+)
+```
+
+The handle keeps the same binding while its component instance and hook key are preserved. Calling `Blur` releases focus only when its bound host is currently focused.
 
 ## 9. Builtin acceptance criteria
 

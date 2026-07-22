@@ -59,6 +59,7 @@ type BoxProps struct {
 	Style                omnitui.Style
 	Focusable            bool
 	Disabled             bool
+	Focus                omnitui.FocusHandle
 	OnKey                omnitui.EventHandler[omnitui.KeyEvent]
 	OnTextInput          omnitui.EventHandler[omnitui.TextInputEvent]
 	OnPaste              omnitui.EventHandler[omnitui.PasteEvent]
@@ -79,7 +80,7 @@ func Box(props BoxProps, children ...omnitui.Element) omnitui.Element {
 		MinHeight: props.MinHeight, MaxHeight: props.MaxHeight, FlexGrow: props.FlexGrow, Padding: props.Padding, Gap: props.Gap,
 		Direction: uint8(props.Direction), Align: uint8(props.Align), Justify: uint8(props.Justify),
 		Wrap: props.Wrap, Clip: props.Clip, Border: uint8(props.Border), Style: props.Style,
-		Focusable: props.Focusable, Disabled: props.Disabled,
+		Focusable: props.Focusable, Disabled: props.Disabled, Focus: props.Focus,
 		Handlers: handlers(map[string]any{
 			"key": props.OnKey, "text": props.OnTextInput, "paste": props.OnPaste, "focus": props.OnFocus,
 			"blur": props.OnBlur, "press": props.OnPress, "mouse": props.OnMouse, "wheel": props.OnWheel,

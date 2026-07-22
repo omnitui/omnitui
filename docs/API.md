@@ -11,7 +11,7 @@ import (
 )
 ```
 
-- `omnitui`: elements, components, state, context, runtime, events, geometry, and styles.
+- `omnitui`: elements, components, state, context, hooks, runtime, events, geometry, and styles.
 - `omnitui/components`: `Box`, `Row`, `Column`, `Text`, `Button`, `Input`, `Tabs`, and `List`.
 
 The module path is `github.com/omnitui/omnitui`, as defined in `go.mod`.
@@ -104,7 +104,79 @@ func Provide[T any](key ContextKey[T], value T, child Element) Element
 
 `Context` is the framework’s render context and does not replace `context.Context`. Providers use tree scope: the nearest value wins and does not leak to siblings.
 
-## 5. Runtime — `omnitui`
+## 5. Hooks — `omnitui`
+
+Hooks are called only during `Render`. Hooks that own per-instance storage use a non-empty key; duplicate keys for the same hook kind during one render are programming errors.
+
+See the executable [hooks example](../examples/hooks/main.go) for `UseContext`, `UseEffect`, `UseRef`, `UseViewport`, and `UseFocus` working together.
+
+### Effects
+
+```go
+type Cleanup func()
+
+func UseEffect[D comparable](
+    ctx Context,
+    key string,
+    dependencies D,
+    setup func(context.Context) Cleanup,
+)
+```
+
+- `setup` runs after a successful screen commit, never during `Render`.
+- The first render runs the effect. Later renders rerun it only when `dependencies` changes.
+- Before replacement or removal, the previous context is canceled and its cleanup is called.
+- Removing the hook, unmounting the component, or returning from `App.Run` cleans up the effect.
+- A `nil` cleanup is valid. A nil setup is a programming error.
+- Dependencies must be comparable. Use a comparable struct, version, key, or hash for multiple or non-comparable inputs.
+- `struct{}{}` is a stable dependency for an effect that runs once per mount.
+- Setup and cleanup run on the runtime goroutine and must return promptly. Long-running work belongs in a goroutine that observes the supplied context.
+
+### References
+
+```go
+type Ref[T any] struct {
+    // synchronized value
+}
+
+func UseRef[T any](ctx Context, key string, initial T) *Ref[T]
+func (ref *Ref[T]) Get() T
+func (ref *Ref[T]) Set(value T)
+func (ref *Ref[T]) Swap(value T) T
+func (ref *Ref[T]) Update(update func(current T) T) T
+```
+
+`UseRef` returns the same synchronized reference while the component instance continues rendering that key. Ref mutations are safe across goroutines and do not invalidate the interface. The `Update` callback executes while the ref is locked and must not access the same ref. If the hook disappears from a render, its key is discarded; using the same key with another type is a programming error.
+
+### Viewport
+
+```go
+type Viewport struct {
+    Width  int
+    Height int
+}
+
+func UseViewport(ctx Context) Viewport
+```
+
+`UseViewport` returns the current terminal dimensions. Resize already invalidates the application, so responsive components observe the new dimensions on the next render.
+
+### Programmatic focus
+
+```go
+type FocusHandle struct {
+    // opaque instance binding
+}
+
+func UseFocus(ctx Context, key string) FocusHandle
+func (focus FocusHandle) Request()
+func (focus FocusHandle) Blur()
+func (focus FocusHandle) Focused() bool
+```
+
+Attach a handle to the `Focus` prop of exactly one focusable `Box`, `Button`, `Input`, `Tabs`, or selectable `List`. `Request` and `Blur` enqueue work and may be called from handlers or other goroutines, but not during `Render`. Requests for a disabled, hidden, unmounted, or non-focusable target are ignored. The zero `FocusHandle` is inert.
+
+## 6. Runtime — `omnitui`
 
 ```go
 type ColorProfile uint8
@@ -134,7 +206,7 @@ func (app *App) Dispatch(message any)
 
 - `Input` and `Output` use the current terminal when omitted.
 - `ColorProfileAuto` detects the best available capability; an explicit option makes tests and remote environments predictable.
-- `Run` owns the terminal until it returns and restores its state on success, cancellation, error, or panic.
+- `Run` owns the terminal until it returns, cleans up active effects, and restores terminal state on success, cancellation, error, or panic.
 - `UpdateRoot` and `Dispatch` only publish work to the queue and may be called from other goroutines.
 - `Dispatch(value)` produces a `MessageEvent` at the root host node.
 
@@ -146,7 +218,7 @@ var ErrInterrupted = errors.New("omnitui: interrupted")
 
 `Run` returns `ErrInterrupted` when `Ctrl+C` is not consumed.
 
-## 6. Geometry — `omnitui`
+## 7. Geometry — `omnitui`
 
 ```go
 type Size struct {
@@ -174,7 +246,7 @@ type Rect struct {
 - `Fill()` occupies all space available from the parent, after its padding and border, while respecting minimum and maximum dimensions.
 - Percentages and proportional units are not part of the MVP.
 
-## 7. Styles — `omnitui`
+## 8. Styles — `omnitui`
 
 ### Colors
 
@@ -283,7 +355,7 @@ normalChild := omnitui.Style{
 
 Props such as `FocusStyle`, `ActiveStyle`, and `SelectedStyle` are applied after `Style`, using the same rules. Padding, gap, border, alignment, and clipping are component properties, not `Style` attributes.
 
-## 8. Builtin components — `components`
+## 9. Builtin components — `components`
 
 ### Shared enums
 
@@ -367,6 +439,7 @@ type BoxProps struct {
 
     Focusable bool
     Disabled  bool
+    Focus     omnitui.FocusHandle
 
     OnKey       omnitui.EventHandler[omnitui.KeyEvent]
     OnTextInput omnitui.EventHandler[omnitui.TextInputEvent]
@@ -448,6 +521,7 @@ type ButtonProps struct {
     Style         omnitui.Style
     FocusStyle    omnitui.Style
     DisabledStyle omnitui.Style
+    Focus         omnitui.FocusHandle
 
     OnKey   omnitui.EventHandler[omnitui.KeyEvent]
     OnFocus omnitui.EventHandler[omnitui.FocusEvent]
@@ -474,6 +548,7 @@ type InputProps struct {
     MaxLength   int
     Style       omnitui.Style
     FocusStyle  omnitui.Style
+    Focus       omnitui.FocusHandle
 
     OnChange    omnitui.EventHandler[omnitui.ValueChangeEvent]
     OnSubmit    omnitui.EventHandler[omnitui.SubmitEvent]
@@ -506,6 +581,7 @@ type TabsProps struct {
     Orientation Orientation
     Style       omnitui.Style
     ActiveStyle omnitui.Style
+    Focus       omnitui.FocusHandle
     OnChange    omnitui.EventHandler[omnitui.ValueChangeEvent]
 }
 
@@ -536,6 +612,7 @@ type ListProps struct {
     Empty         omnitui.Element
     Style         omnitui.Style
     SelectedStyle omnitui.Style
+    Focus         omnitui.FocusHandle
 
     OnChange   omnitui.EventHandler[omnitui.ValueChangeEvent]
     OnActivate omnitui.EventHandler[omnitui.ActivateEvent]
@@ -548,7 +625,7 @@ func List(props ListProps, items ...omnitui.Element) omnitui.Element
 
 Every direct item must have `WithKey`. `List` is controlled by `SelectedKey`; a left click proposes the item and wheel input moves only the viewport. Detailed scrolling and navigation are in [COMPONENTS.md](COMPONENTS.md#scrolling).
 
-## 9. Events — `omnitui`
+## 10. Events — `omnitui`
 
 ### Handler contract
 
@@ -835,11 +912,9 @@ Pending resizes may be coalesced to the most recent size. Messages preserve orde
 - `TickEvent`;
 - `KeyUp`;
 - semantic `DoubleClickEvent` and `DragEvent`;
-- `Mount`, `Update`, and `Unmount` lifecycle.
+Direct `Mount`, `Update`, and `Unmount` events are not exposed; lifecycle work belongs in `UseEffect` setup and cleanup.
 
-Lifecycle will belong to a future effects and cleanup API, not the input event system.
-
-## 10. Handler matrix by component
+## 11. Handler matrix by component
 
 | Component | Public handlers |
 |---|---|
@@ -852,13 +927,15 @@ Lifecycle will belong to a future effects and cleanup API, not the input event s
 
 To make `Row` or `Column` interactive, use a `Box` configured as focusable or create a composite component that renders an interactive surface.
 
-## 11. Usage errors
+## 12. Usage errors
 
-The following situations are programming errors and must include the component path:
+The following situations are programming errors and include the component path when a component context exists:
 
 - duplicate key among siblings;
 - incompatible state type;
 - state update during `Render`;
+- hook called outside `Render`, with an empty or duplicate key, or with an incompatible stored type;
+- focus request or blur during `Render`;
 - children passed to a leaf component;
 - props with negative sizes;
 - missing or disabled active tab;
