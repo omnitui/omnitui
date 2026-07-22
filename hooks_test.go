@@ -7,9 +7,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/omnitui/omnitui/internal/backend"
-	"github.com/omnitui/omnitui/internal/backend/headless"
-	"github.com/omnitui/omnitui/internal/core"
+	"github.com/omnitui/omnitui/v2/internal/backend"
+	"github.com/omnitui/omnitui/v2/internal/backend/headless"
+	"github.com/omnitui/omnitui/v2/internal/core"
 )
 
 type effectProps struct {

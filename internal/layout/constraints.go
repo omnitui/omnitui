@@ -1,6 +1,6 @@
 package layout
 
-import "github.com/omnitui/omnitui/internal/core"
+import "github.com/omnitui/omnitui/v2/internal/core"
 
 type Constraints struct {
 	MinWidth, MaxWidth   int

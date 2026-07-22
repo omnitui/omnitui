@@ -3,7 +3,7 @@ package omnitui
 import (
 	"fmt"
 
-	"github.com/omnitui/omnitui/internal/core"
+	"github.com/omnitui/omnitui/v2/internal/core"
 )
 
 type instance struct {

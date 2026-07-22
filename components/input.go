@@ -1,8 +1,8 @@
 package components
 
 import (
-	"github.com/omnitui/omnitui"
-	"github.com/omnitui/omnitui/internal/core"
+	"github.com/omnitui/omnitui/v2"
+	"github.com/omnitui/omnitui/v2/internal/core"
 )
 
 type InputProps struct {

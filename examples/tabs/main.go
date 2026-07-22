@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 
-	omnitui "github.com/omnitui/omnitui"
-	"github.com/omnitui/omnitui/components"
+	omnitui "github.com/omnitui/omnitui/v2"
+	"github.com/omnitui/omnitui/v2/components"
 )
 
 type tabsState struct {

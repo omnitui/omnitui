@@ -3,7 +3,7 @@ package headless
 import (
 	"sync"
 
-	"github.com/omnitui/omnitui/internal/backend"
+	"github.com/omnitui/omnitui/v2/internal/backend"
 )
 
 type Backend struct {

@@ -3,9 +3,9 @@ package omnitui
 import (
 	"fmt"
 
-	"github.com/omnitui/omnitui/internal/backend"
-	"github.com/omnitui/omnitui/internal/core"
-	uitext "github.com/omnitui/omnitui/internal/text"
+	"github.com/omnitui/omnitui/v2/internal/backend"
+	"github.com/omnitui/omnitui/v2/internal/core"
+	uitext "github.com/omnitui/omnitui/v2/internal/text"
 )
 
 func (app *App) handleBackendEvent(value any) error {

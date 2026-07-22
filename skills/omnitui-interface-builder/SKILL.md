@@ -1,6 +1,6 @@
 ---
 name: omnitui-interface-builder
-description: Build, extend, style, and validate terminal user interfaces with the OmniTUI Go framework. Use when creating or modifying OmniTUI components, examples, dashboards, forms, menus, tabs, lists, interactive terminal screens, layout composition, event handling, or terminal styling in a Go repository that uses github.com/omnitui/omnitui.
+description: Build, extend, style, and validate terminal user interfaces with the OmniTUI Go framework. Use when creating or modifying OmniTUI components, examples, dashboards, forms, menus, tabs, lists, interactive terminal screens, layout composition, event handling, or terminal styling in a Go repository that uses github.com/omnitui/omnitui/v2.
 ---
 
 # OmniTUI Interface Builder

@@ -1,6 +1,6 @@
 package screen
 
-import "github.com/omnitui/omnitui/internal/core"
+import "github.com/omnitui/omnitui/v2/internal/core"
 
 type Cell struct {
 	Grapheme string

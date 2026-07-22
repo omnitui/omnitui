@@ -3,8 +3,8 @@ package components
 import (
 	"fmt"
 
-	"github.com/omnitui/omnitui"
-	"github.com/omnitui/omnitui/internal/core"
+	"github.com/omnitui/omnitui/v2"
+	"github.com/omnitui/omnitui/v2/internal/core"
 )
 
 type Direction uint8

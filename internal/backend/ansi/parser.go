@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/omnitui/omnitui/internal/backend"
+	"github.com/omnitui/omnitui/v2/internal/backend"
 )
 
 type Parser struct {

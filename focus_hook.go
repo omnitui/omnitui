@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/omnitui/omnitui/internal/core"
+	"github.com/omnitui/omnitui/v2/internal/core"
 )
 
 type focusBinding struct {

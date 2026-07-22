@@ -7,10 +7,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/omnitui/omnitui/internal/backend"
-	"github.com/omnitui/omnitui/internal/backend/headless"
-	"github.com/omnitui/omnitui/internal/core"
-	"github.com/omnitui/omnitui/internal/screen"
+	"github.com/omnitui/omnitui/v2/internal/backend"
+	"github.com/omnitui/omnitui/v2/internal/backend/headless"
+	"github.com/omnitui/omnitui/v2/internal/core"
+	"github.com/omnitui/omnitui/v2/internal/screen"
 )
 
 type probeProps struct{ Value string }

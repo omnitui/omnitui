@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/omnitui/omnitui/internal/core"
+	"github.com/omnitui/omnitui/v2/internal/core"
 )
 
 func styleSequence(style core.Style, profile uint8) string {

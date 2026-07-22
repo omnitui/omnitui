@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	omnitui "github.com/omnitui/omnitui"
-	"github.com/omnitui/omnitui/internal/core"
+	omnitui "github.com/omnitui/omnitui/v2"
+	"github.com/omnitui/omnitui/v2/internal/core"
 )
 
 type focusForwardProbe struct{ seen *bool }

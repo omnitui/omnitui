@@ -42,7 +42,7 @@ Arrow keys move focus between headers; `Enter`, `Space`, or a click selects a ta
 Requirements: Go 1.22 or later and an ANSI/VT100-compatible terminal. On Windows, use Windows Terminal or a modern Windows console host.
 
 ```bash
-go get github.com/omnitui/omnitui@latest
+go get github.com/omnitui/omnitui/v2@latest
 ```
 
 ## Minimal example
@@ -56,8 +56,8 @@ import (
 	"context"
 	"fmt"
 
-	omnitui "github.com/omnitui/omnitui"
-	"github.com/omnitui/omnitui/components"
+	omnitui "github.com/omnitui/omnitui/v2"
+	"github.com/omnitui/omnitui/v2/components"
 )
 
 type counterState struct {

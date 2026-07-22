@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	omnitui "github.com/omnitui/omnitui"
-	"github.com/omnitui/omnitui/components"
+	omnitui "github.com/omnitui/omnitui/v2"
+	"github.com/omnitui/omnitui/v2/components"
 )
 
 var (

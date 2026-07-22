@@ -8,8 +8,8 @@ The framework has two public packages:
 
 ```go
 import (
-    omnitui "github.com/omnitui/omnitui"
-    components "github.com/omnitui/omnitui/components"
+    omnitui "github.com/omnitui/omnitui/v2"
+    components "github.com/omnitui/omnitui/v2/components"
 )
 ```
 
@@ -19,7 +19,7 @@ import (
 An application may use a short alias without changing the package’s actual name:
 
 ```go
-import ui "github.com/omnitui/omnitui/components"
+import ui "github.com/omnitui/omnitui/v2/components"
 
 view := ui.Row(ui.RowProps{Gap: 1}, ...)
 ```
