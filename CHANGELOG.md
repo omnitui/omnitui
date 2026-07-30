@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/omnitui/omnitui/compare/v2.0.0...v2.1.0) (2026-07-30)
+
+
+### Features
+
+* release ([c1f645f](https://github.com/omnitui/omnitui/commit/c1f645f7d2b04aa472495cfa1f22dfa430962563))
+
 ## [2.0.0](https://github.com/omnitui/omnitui/compare/v1.2.0...v2.0.0) (2026-07-22)
 
 
