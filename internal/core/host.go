@@ -9,6 +9,7 @@ const (
 	HostInput
 	HostTabs
 	HostList
+	HostOverlay
 )
 
 // Host is the normalized data consumed by reconciliation, layout and paint.
@@ -55,6 +56,8 @@ func cloneHostData(data any) any {
 	case ListData:
 		value.Handlers = cloneHandlers(value.Handlers)
 		return value
+	case OverlayData:
+		return value
 	default:
 		return data
 	}
@@ -85,6 +88,7 @@ type BoxData struct {
 	Justify              uint8
 	Wrap, Clip           bool
 	Border               uint8
+	Label                string
 	Style                Style
 	Focusable, Disabled  bool
 	Focus                any
@@ -149,3 +153,7 @@ type ListData struct {
 	Focus                any
 	Handlers             Handlers
 }
+
+// OverlayData marks an internal host whose child is anchored at the host
+// position without contributing height to its parent's layout.
+type OverlayData struct{}

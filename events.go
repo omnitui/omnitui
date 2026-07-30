@@ -548,19 +548,37 @@ func ancestorHost(target *instance, kind core.HostKind) *instance {
 }
 func (app *App) targetAt(x, y int) *instance {
 	var best *instance
-	var visit func(*instance)
-	visit = func(current *instance) {
+	var visit func(*instance, bool)
+	visit = func(current *instance, includeOverlays bool) {
 		if current == nil || current.clip.Empty() || !current.clip.Contains(x, y) {
+			return
+		}
+		if current.kind() == core.KindHost && current.host.Kind == core.HostOverlay && !includeOverlays {
 			return
 		}
 		if current.kind() == core.KindHost && current.rect.Contains(x, y) {
 			best = current
 		}
 		for _, child := range current.children {
-			visit(child)
+			visit(child, includeOverlays)
 		}
 	}
-	visit(app.rootInstance)
+	var visitOverlays func(*instance)
+	visitOverlays = func(current *instance) {
+		if current == nil {
+			return
+		}
+		if current.kind() == core.KindHost && current.host.Kind == core.HostOverlay {
+			for _, child := range current.children {
+				visit(child, true)
+			}
+		}
+		for _, child := range current.children {
+			visitOverlays(child)
+		}
+	}
+	visit(app.rootInstance, false)
+	visitOverlays(app.rootInstance)
 	return best
 }
 func (app *App) listItemAt(list *instance, x, y int) *instance {

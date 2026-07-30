@@ -46,6 +46,7 @@ Start with one structural container and divide the screen into named regions:
 - Use `Row` for toolbars, form fields, metric cards, and side-by-side panels.
 - Use `Text` for labels, descriptions, status lines, and empty states.
 - Use `Input` for controlled single-line editing.
+- Use `Dropdown` for selecting one value from a compact set of keyed options.
 - Use `Button` for explicit actions.
 - Use `Tabs` for mutually exclusive panels.
 - Use `List` for keyed selection and scrolling.
@@ -54,7 +55,7 @@ Keep a predictable hierarchy: outer surface → header → navigation/content �
 
 ### 4. Make interactive components controlled
 
-`Input`, `Tabs`, and `List` receive their public value from props. Their events propose a new value; accept it by updating the parent state.
+`Input`, `Dropdown`, `Tabs`, and `List` receive their public value from props. Their events propose a new value; accept it by updating the parent state.
 
 ```go
 components.Tabs(components.TabsProps{
@@ -73,7 +74,7 @@ components.Tabs(components.TabsProps{
 })
 ```
 
-Apply the same pattern to `Input.OnChange`, `Input.OnSubmit`, `List.OnChange`, and `List.OnActivate`. Give every direct `List` child a unique, stable `.WithKey(...)`; use stable tab keys as well.
+Apply the same pattern to `Input.OnChange`, `Input.OnSubmit`, `Dropdown.OnChange`, `List.OnChange`, and `List.OnActivate`. Give every dropdown option, tab, and direct `List` child a unique, stable key.
 
 ### 5. Add visual hierarchy
 
@@ -115,6 +116,7 @@ If the interface is interactive, exercise keyboard traversal, Enter/Space activa
 ## Layout rules
 
 - Set `Gap` and `Padding` deliberately; use `omnitui.All(n)` for equal inset and `omnitui.XY(horizontal, vertical)` for asymmetric spacing.
+- Use `BoxProps.Label` with a border when a panel needs a title on its top edge.
 - Use `omnitui.Cells(n)` for stable terminal dimensions and `omnitui.Auto()` when content should determine size.
 - Keep fixed-width sibling panels narrow enough for common terminal widths. Avoid adding several unconstrained fixed-width columns in one `Row`.
 - Use `Align` for the cross-axis and `Justify` for the main axis. Prefer `AlignCenter` for compact controls and `JustifySpaceBetween` for toolbars.
@@ -133,11 +135,12 @@ If the interface is interactive, exercise keyboard traversal, Enter/Space activa
 | Vertical group | `Column` | Children share a vertical axis; use `Gap` and `Padding`. |
 | Static content | `Text` | Leaf component; use wrapping and truncation for prose. |
 | Text editing | `Input` | Controlled by `Value`; accept changes through `OnChange`. |
+| Compact selection | `Dropdown` | Use unique option keys, controlled `SelectedKey`, and `OnChange`. |
 | Action | `Button` | Handle `OnPress`; define both `Style` and `FocusStyle`. |
 | Panel navigation | `Tabs` | Use unique keys, controlled `ActiveKey`, and an `OnChange` handler. |
 | Selectable viewport | `List` | Key every item, control `SelectedKey`, and use `OnActivate` for Enter. |
 
-`Box` and `Button` are lower-level building blocks; `Row`, `Column`, `Text`, `Input`, `Tabs`, and `List` are the usual application-level components.
+`Box` and `Button` are lower-level building blocks; `Row`, `Column`, `Text`, `Input`, `Dropdown`, `Tabs`, and `List` are the usual application-level components.
 
 ## Interaction patterns
 
@@ -156,6 +159,14 @@ If the interface is interactive, exercise keyboard traversal, Enter/Space activa
 - Keep each panel’s content inside a `Column` or `Box` so padding and background are explicit.
 - Style inactive and active headers separately.
 - Verify that clicking a tab header selects the tab without treating the content row as part of the header hitbox.
+
+### Dropdowns
+
+- Keep `SelectedKey` in parent state and accept proposals through `OnChange`.
+- Use unique, stable keys and short labels; mark unavailable options as disabled.
+- Set `MenuHeight` when a long option set should scroll instead of expanding the screen.
+- Remember that the menu overlays the following content without consuming layout height.
+- Provide visible `FocusStyle`, `SelectedStyle`, and `DisabledOptionStyle` roles.
 
 ### Lists
 
@@ -213,7 +224,7 @@ Keep helper functions pure with respect to rendering: accept `ctx` and state, re
 - Do not store mutable state in a component value passed to `omnitui.Define`; mounted occurrences must own independent state.
 - Do not pass children to `Text` or `Input`; they are leaves.
 - Do not omit keys from `List` items or reuse keys for unrelated items.
-- Do not make `Tabs` or `List` appear interactive without wiring the corresponding controlled state handler.
+- Do not make `Dropdown`, `Tabs`, or `List` appear interactive without wiring the corresponding controlled state handler.
 - Do not update state during `Render`.
 - Do not use negative dimensions, gaps, padding, or `MaxLines`.
 - Do not create a giant `Row` of unconstrained content that cannot fit a normal terminal.
@@ -225,7 +236,7 @@ Keep helper functions pure with respect to rendering: accept `ctx` and state, re
 - [ ] Read the repository API and component documentation.
 - [ ] Define explicit component state and stable keys.
 - [ ] Build a clear `Box`/`Row`/`Column` hierarchy.
-- [ ] Keep `Input`, `Tabs`, and `List` controlled by parent state.
+- [ ] Keep `Input`, `Dropdown`, `Tabs`, and `List` controlled by parent state.
 - [ ] Add visible focus and selection styles.
 - [ ] Handle keyboard traversal and activation.
 - [ ] Exercise mouse and wheel behavior where supported.

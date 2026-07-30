@@ -76,6 +76,17 @@ func TestStyleConflictIsRejected(t *testing.T) {
 	mustPanic(t, func() { Text(TextProps{Style: omnitui.Style{Attributes: omnitui.Bold, ClearAttributes: omnitui.Bold}}) })
 }
 
+func TestBoxForwardsBorderLabel(t *testing.T) {
+	element := Box(BoxProps{Border: BorderRounded, Label: "Settings"})
+	host, ok := core.HostOf(element)
+	if !ok {
+		t.Fatal("Box did not create a host")
+	}
+	if got := host.Data.(core.BoxData).Label; got != "Settings" {
+		t.Fatalf("label = %q, want Settings", got)
+	}
+}
+
 func TestFocusableComponentsForwardFocusHandle(t *testing.T) {
 	seen := false
 	typeValue := omnitui.Define[struct{}, struct{}]("FocusForwardProbe", focusForwardProbe{seen: &seen})

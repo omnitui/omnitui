@@ -56,6 +56,7 @@ type BoxProps struct {
 	Wrap                 bool
 	Clip                 bool
 	Border               BorderStyle
+	Label                string
 	Style                omnitui.Style
 	Focusable            bool
 	Disabled             bool
@@ -79,7 +80,7 @@ func Box(props BoxProps, children ...omnitui.Element) omnitui.Element {
 		Width: props.Width, Height: props.Height, MinWidth: props.MinWidth, MaxWidth: props.MaxWidth,
 		MinHeight: props.MinHeight, MaxHeight: props.MaxHeight, FlexGrow: props.FlexGrow, Padding: props.Padding, Gap: props.Gap,
 		Direction: uint8(props.Direction), Align: uint8(props.Align), Justify: uint8(props.Justify),
-		Wrap: props.Wrap, Clip: props.Clip, Border: uint8(props.Border), Style: props.Style,
+		Wrap: props.Wrap, Clip: props.Clip, Border: uint8(props.Border), Label: props.Label, Style: props.Style,
 		Focusable: props.Focusable, Disabled: props.Disabled, Focus: props.Focus,
 		Handlers: handlers(map[string]any{
 			"key": props.OnKey, "text": props.OnTextInput, "paste": props.OnPaste, "focus": props.OnFocus,

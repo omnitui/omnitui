@@ -35,6 +35,7 @@ func (app *App) render() error {
 	app.back = screen.NewBuffer(app.width, app.height, Style{})
 	if app.rootInstance != nil {
 		paintNode(app.back, app.rootInstance)
+		paintOverlays(app.back, app.rootInstance)
 	}
 	profile := resolveColorProfile(app.options.ColorProfile)
 	output := screen.Diff(app.front, app.back, profile)
@@ -208,6 +209,12 @@ func measureHost(i *instance, maxWidth, maxHeight int) (int, int) {
 		return measureTabs(i, data, maxWidth, maxHeight)
 	case core.ListData:
 		return measureList(i, data, maxWidth, maxHeight)
+	case core.OverlayData:
+		if len(i.children) == 0 {
+			return 0, 0
+		}
+		width, _ := measureNode(i.children[0], maxWidth, maxHeight)
+		return width, 0
 	case core.BoxData:
 		return measureBox(i, data, maxWidth, maxHeight)
 	default:
@@ -253,6 +260,10 @@ func measureBox(i *instance, data core.BoxData, maxWidth, maxHeight int) (int, i
 	}
 	width += border + data.Padding.Left + data.Padding.Right
 	height += border + data.Padding.Top + data.Padding.Bottom
+	if data.Border != 0 && data.Label != "" {
+		label := strings.SplitN(data.Label, "\n", 2)[0]
+		width = maxInt(width, uitext.Width(label)+4)
+	}
 	if core.SizeModeOf(data.Width) == core.SizeCells {
 		width = core.SizeValueOf(data.Width)
 	} else if core.SizeModeOf(data.Width) == core.SizeFill {
@@ -370,6 +381,10 @@ func arrangeNode(i *instance, rect, clip Rect, inherited Style, override *Style)
 	if i == nil {
 		return
 	}
+	if i.kind() == core.KindHost && i.host.Kind == core.HostOverlay {
+		arrangeOverlay(i, rect, inherited, override)
+		return
+	}
 	i.rect, i.clip = rect, core.IntersectRect(clip, rect)
 	own := hostStyle(i)
 	if override != nil {
@@ -402,6 +417,30 @@ func arrangeNode(i *instance, rect, clip Rect, inherited Style, override *Style)
 			}
 		}
 	}
+}
+
+func arrangeOverlay(i *instance, anchor Rect, inherited Style, override *Style) {
+	screenRect := Rect{Width: i.app.width, Height: i.app.height}
+	i.rect, i.clip = anchor, screenRect
+	own := hostStyle(i)
+	if override != nil {
+		own, _ = core.ResolveStyle(own, *override)
+	}
+	i.style, _ = core.ResolveStyle(inherited, own)
+	if len(i.children) == 0 {
+		return
+	}
+	availableWidth := maxInt(screenRect.Width-anchor.X, 0)
+	availableHeight := maxInt(screenRect.Height-anchor.Y, 0)
+	width := minInt(anchor.Width, availableWidth)
+	_, height := measureNode(i.children[0], maxInt(width, 1), availableHeight)
+	arrangeNode(
+		i.children[0],
+		Rect{X: anchor.X, Y: anchor.Y, Width: width, Height: minInt(height, availableHeight)},
+		screenRect,
+		i.style,
+		nil,
+	)
 }
 
 func fillHost(buffer *screen.Buffer, i *instance) {
@@ -835,6 +874,9 @@ func paintNode(buffer *screen.Buffer, i *instance) {
 			paintNode(buffer, child)
 		}
 	case core.KindHost:
+		if i.host.Kind == core.HostOverlay {
+			return
+		}
 		fillHost(buffer, i)
 		switch data := i.host.Data.(type) {
 		case core.BoxData:
@@ -854,6 +896,20 @@ func paintNode(buffer *screen.Buffer, i *instance) {
 		case core.ListData:
 			paintList(buffer, i, data)
 		}
+	}
+}
+
+func paintOverlays(buffer *screen.Buffer, i *instance) {
+	if i == nil {
+		return
+	}
+	if i.kind() == core.KindHost && i.host.Kind == core.HostOverlay {
+		for _, child := range i.children {
+			paintNode(buffer, child)
+		}
+	}
+	for _, child := range i.children {
+		paintOverlays(buffer, child)
 	}
 }
 
@@ -882,10 +938,30 @@ func paintBox(buffer *screen.Buffer, i *instance, data core.BoxData) {
 			buffer.Set(x, row, glyphs[5], i.style)
 			buffer.Set(x+w-1, row, glyphs[5], i.style)
 		}
+		paintBoxLabel(buffer, i, data.Label)
 	}
 	for _, child := range i.children {
 		paintNode(buffer, child)
 	}
+}
+
+func paintBoxLabel(buffer *screen.Buffer, i *instance, value string) {
+	if value == "" || i.rect.Width < 5 || i.rect.Height < 1 {
+		return
+	}
+	label := strings.SplitN(value, "\n", 2)[0]
+	label = uitext.Truncate(label, i.rect.Width-4, true)
+	if label == "" {
+		return
+	}
+	x, y := i.rect.X+1, i.rect.Y
+	buffer.Set(x, y, " ", i.style)
+	x++
+	for _, grapheme := range uitext.Graphemes(label) {
+		buffer.Set(x, y, grapheme, i.style)
+		x += uitext.Width(grapheme)
+	}
+	buffer.Set(x, y, " ", i.style)
 }
 
 func paintText(buffer *screen.Buffer, i *instance, value string, wrap, align uint8, maxLines int, truncate uint8, style Style) {

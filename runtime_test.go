@@ -163,6 +163,92 @@ func TestFillUsesAvailableSpace(t *testing.T) {
 	}
 }
 
+func TestOverlayDoesNotConsumeLayoutAndPaintsAboveSiblings(t *testing.T) {
+	anchor := core.NewHost(core.HostText, core.TextData{Content: "anchor"}, nil)
+	menu := core.NewHost(core.HostText, core.TextData{Content: "menu"}, nil)
+	overlay := core.NewHost(core.HostOverlay, core.OverlayData{}, []Element{menu})
+	below := core.NewHost(core.HostText, core.TextData{Content: "below"}, nil)
+	root := core.NewHost(
+		core.HostBox,
+		core.BoxData{Direction: 1},
+		[]Element{anchor, overlay, below},
+	)
+	app := New(root, Options{})
+	app.width, app.height = 20, 4
+
+	if err := app.render(); err != nil {
+		t.Fatal(err)
+	}
+	overlayInstance := app.rootInstance.children[1]
+	belowInstance := app.rootInstance.children[2]
+	if got, want := belowInstance.rect.Y, 1; got != want {
+		t.Fatalf("sibling Y = %d, want %d", got, want)
+	}
+	if got, want := overlayInstance.children[0].rect.Y, belowInstance.rect.Y; got != want {
+		t.Fatalf("overlay Y = %d, want sibling Y %d", got, want)
+	}
+	if got := app.front.Cell(0, 1).Grapheme; got != "m" {
+		t.Fatalf("painted grapheme = %q, want overlay grapheme m", got)
+	}
+	if got := app.targetAt(0, 1); got != overlayInstance.children[0] {
+		t.Fatalf("hit target = %v, want overlay child", got)
+	}
+}
+
+func TestBoxLabelOverlaysAndTruncatesTopBorder(t *testing.T) {
+	tests := []struct {
+		name  string
+		width int
+		label string
+		want  string
+	}{
+		{name: "label", width: 12, label: "Panel", want: "┌ Panel ───┐"},
+		{name: "truncated", width: 7, label: "Settings", want: "┌ Se… ┐"},
+		{name: "first line", width: 10, label: "Title\nignored", want: "┌ Title ─┐"},
+		{name: "wide grapheme", width: 9, label: "🙂 UI", want: "┌ 🙂 UI ┐"},
+		{name: "too narrow", width: 4, label: "Panel", want: "┌──┐"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			box := &instance{
+				host:  core.Host{Kind: core.HostBox, Data: core.BoxData{Border: 1, Label: test.label}},
+				rect:  Rect{Width: test.width, Height: 3},
+				clip:  Rect{Width: test.width, Height: 3},
+				style: Style{},
+			}
+			buffer := screen.NewBuffer(test.width, 3, Style{})
+
+			paintBox(buffer, box, box.host.Data.(core.BoxData))
+
+			got := ""
+			for x := 0; x < test.width; x++ {
+				cell := buffer.Cell(x, 0)
+				if cell.Width > 0 {
+					got += cell.Grapheme
+				}
+			}
+			if got != test.want {
+				t.Fatalf("top border = %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
+func TestBoxLabelContributesToAutoWidth(t *testing.T) {
+	box := &instance{
+		host: core.Host{
+			Kind: core.HostBox,
+			Data: core.BoxData{Border: 1, Label: "Settings"},
+		},
+	}
+
+	width, height := measureHost(box, 20, 5)
+
+	if width != 12 || height != 2 {
+		t.Fatalf("size = %dx%d, want 12x2", width, height)
+	}
+}
+
 func TestTabsHorizontalPaddingIsPaintedAndClickable(t *testing.T) {
 	activeStyle := core.Style{
 		Foreground: core.ANSIColorValue(1),

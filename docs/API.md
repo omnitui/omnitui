@@ -12,7 +12,7 @@ import (
 ```
 
 - `omnitui`: elements, components, state, context, hooks, runtime, events, geometry, and styles.
-- `omnitui/components`: `Box`, `Row`, `Column`, `Text`, `Button`, `Input`, `Tabs`, and `List`.
+- `omnitui/components`: `Box`, `Row`, `Column`, `Text`, `Button`, `Input`, `Dropdown`, `Tabs`, and `List`.
 
 The module path is `github.com/omnitui/omnitui/v2`, as defined in `go.mod`.
 
@@ -103,6 +103,8 @@ func Provide[T any](key ContextKey[T], value T, child Element) Element
 ```
 
 `Context` is the framework’s render context and does not replace `context.Context`. Providers use tree scope: the nearest value wins and does not leak to siblings.
+
+`UseContext` is read-only. To let a descendant update a provided value, keep the value in an ancestor's state and provide an action that updates that state, as shown in the executable [context example](../examples/context/main.go).
 
 ## 5. Hooks — `omnitui`
 
@@ -435,6 +437,7 @@ type BoxProps struct {
     Wrap                 bool
     Clip                 bool
     Border               BorderStyle
+    Label                string
     Style                omnitui.Style
 
     Focusable bool
@@ -456,7 +459,7 @@ type BoxProps struct {
 func Box(props BoxProps, children ...omnitui.Element) omnitui.Element
 ```
 
-`OnResize` and `OnMessage` are called only when the `Box` is the root host node. When different from `BorderNone`, `Border` occupies one cell on each of the four sides.
+`OnResize` and `OnMessage` are called only when the `Box` is the root host node. When different from `BorderNone`, `Border` occupies one cell on each of the four sides. A non-empty `Label` replaces part of the top border, uses the `Box` style, and contributes to its automatic width. It is truncated with an ellipsis when a width constraint prevents it from fitting. `Label` is ignored when `Border` is `BorderNone`.
 
 ### `Row`
 
@@ -565,6 +568,37 @@ func Input(props InputProps) omnitui.Element
 
 `Input` is controlled by `Value`; `OnChange` only proposes a new value. `MaxLength` counts graphemes. `Mask` changes painting only. A left click positions the cursor at the nearest visual grapheme.
 
+### `Dropdown`
+
+```go
+type DropdownOption struct {
+    Key      string
+    Label    string
+    Disabled bool
+}
+
+type DropdownProps struct {
+    Options             []DropdownOption
+    SelectedKey         string
+    Placeholder         string
+    Width               omnitui.Size
+    MenuHeight          omnitui.Size
+    Disabled            bool
+    Wrap                bool
+    Style               omnitui.Style
+    FocusStyle          omnitui.Style
+    DisabledStyle       omnitui.Style
+    MenuStyle           omnitui.Style
+    SelectedStyle       omnitui.Style
+    DisabledOptionStyle omnitui.Style
+    OnChange            omnitui.EventHandler[omnitui.ValueChangeEvent]
+}
+
+func Dropdown(props DropdownProps) omnitui.Element
+```
+
+`Dropdown` is controlled by `SelectedKey`. `Enter`, `Space`, `Up`, or `Down` opens the menu; arrows, `Home`, and `End` move the active option; `Enter` or a complete left click proposes a selection through `OnChange`; `Escape` closes the menu. The menu is rendered over the content below it, so opening it does not move following siblings. Keys must be unique, and a disabled option cannot be selected.
+
 ### `Tabs`
 
 ```go
@@ -660,7 +694,7 @@ For events without propagation, the return value is ignored, but the signature r
 | `FocusEvent` | Element receives focus | New focus | Does not propagate |
 | `BlurEvent` | Element loses focus | Previous focus | Does not propagate |
 | `PressEvent` | Control activation | Pressable `Button` or `Box` | Target through ancestors |
-| `ValueChangeEvent` | `Input`, `Tabs`, or `List` proposes a value | Emitting builtin | Does not propagate |
+| `ValueChangeEvent` | `Input`, `Dropdown`, `Tabs`, or `List` proposes a value | Emitting builtin | Does not propagate |
 | `SubmitEvent` | `Enter` in an `Input` | Focused `Input` | Does not propagate |
 | `ActivateEvent` | `Enter` on a `List` item | Focused `List` | Does not propagate |
 | `ResizeEvent` | Terminal dimensions change | Root host | Does not propagate |
@@ -921,6 +955,7 @@ Direct `Mount`, `Update`, and `Unmount` events are not exposed; lifecycle work b
 | `Box` | `OnKey`, `OnTextInput`, `OnPaste`, `OnFocus`, `OnBlur`, `OnPress`, `OnMouse`, `OnWheel`, `OnResize`, `OnMessage` |
 | `Button` | `OnKey`, `OnFocus`, `OnBlur`, `OnPress`, `OnMouse` |
 | `Input` | `OnKey`, `OnTextInput`, `OnPaste`, `OnFocus`, `OnBlur`, `OnMouse`, `OnChange`, `OnSubmit` |
+| `Dropdown` | `OnChange` |
 | `Tabs` | `OnChange` |
 | `List` | `OnMouse`, `OnWheel`, `OnChange`, `OnActivate` |
 | `Row`, `Column`, `Text` | No direct handlers |
@@ -938,6 +973,7 @@ The following situations are programming errors and include the component path w
 - focus request or blur during `Render`;
 - children passed to a leaf component;
 - props with negative sizes;
+- empty or duplicate dropdown option key, or an unknown or disabled `SelectedKey`;
 - missing or disabled active tab;
 - `List` item without a key;
 - attribute present simultaneously in `Attributes` and `ClearAttributes`.

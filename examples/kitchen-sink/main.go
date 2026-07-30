@@ -279,9 +279,10 @@ func borderSample(border components.BorderStyle, label string, color omnitui.Col
 			Width:   omnitui.Cells(12),
 			Padding: omnitui.All(1),
 			Border:  border,
+			Label:   label,
 			Style:   omnitui.Style{Foreground: color},
 		},
-		components.Text(components.TextProps{Content: label, Align: components.TextAlignCenter}),
+		components.Text(components.TextProps{Content: "Sample", Align: components.TextAlignCenter}),
 	)
 }
 

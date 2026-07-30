@@ -16,7 +16,7 @@ OmniTUI turns the interface into a tree of immutable elements. The runtime prese
 
 - **Declarative components:** typed props, local state, context, keyed effects and refs, children, and composition.
 - **Predictable reconciliation:** identity by type, position, and key, preserving state across compatible renders.
-- **Ready-to-use builtins:** `Box`, `Row`, `Column`, `Text`, `Button`, `Input`, `Tabs`, and `List`.
+- **Ready-to-use builtins:** `Box`, `Row`, `Column`, `Text`, `Button`, `Input`, `Dropdown`, `Tabs`, and `List`.
 - **Terminal layout:** horizontal or vertical direction, sizing, padding, gap, alignment, wrapping, clipping, and borders.
 - **MVP interaction:** keyboard, text input, paste, focus, SGR mouse, wheel, resize, and external messages.
 - **Inherited styles:** ANSI 16/256 colors, true color, foreground, background, and attributes such as bold, underline, and dim.
@@ -120,13 +120,15 @@ go run .
 | [Tabs](examples/tabs/main.go) | Controlled selection and keyboard navigation | `go run ./examples/tabs` |
 | [Catalog](examples/catalog/main.go) | Controlled list, selection, and scrolling | `go run ./examples/catalog` |
 | [Form](examples/form/main.go) | Controlled input, focus, and submit | `go run ./examples/form` |
+| [Dropdown](examples/dropdown/main.go) | Controlled option selection in an overlay menu | `go run ./examples/dropdown` |
 | [Counter](examples/counter/main.go) | Local state and button events | `go run ./examples/counter` |
+| [Context](examples/context/main.go) | Updating provider state through a context action | `go run ./examples/context` |
 | [Hooks](examples/hooks/main.go) | Context, effects, refs, viewport, and programmatic focus | `go run ./examples/hooks` |
 
 Common controls:
 
 - `Tab` and `Shift+Tab` move focus;
-- arrow keys navigate `Tabs`, `List`, and `Input`;
+- arrow keys navigate `Dropdown`, `Tabs`, `List`, and `Input`;
 - `Enter` or `Space` activate controls;
 - mouse and wheel work in compatible components;
 - `Ctrl+C` exits the application.

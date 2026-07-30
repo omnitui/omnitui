@@ -88,12 +88,14 @@ omnitui/
 │   ├── text.go
 │   ├── button.go
 │   ├── input.go
+│   ├── dropdown.go
 │   ├── tabs.go
 │   ├── list.go
 │   ├── row_test.go
 │   ├── column_test.go
 │   ├── text_test.go
 │   ├── input_test.go
+│   ├── dropdown_test.go
 │   ├── tabs_test.go
 │   └── list_test.go
 │
@@ -154,6 +156,10 @@ omnitui/
 │
 ├── examples/
 │   ├── counter/
+│   │   └── main.go
+│   ├── context/
+│   │   └── main.go
+│   ├── dropdown/
 │   │   └── main.go
 │   ├── hooks/
 │   │   └── main.go
@@ -406,9 +412,11 @@ integration/terminal_test.go
 ```text
 internal/core/host_editable.go
 components/input.go
+components/dropdown.go
 components/tabs.go
 components/list.go
 examples/form/
+examples/dropdown/
 examples/catalog/
 integration/components_test.go
 testdata/screens/catalog_list_scrolled.txt

@@ -1,6 +1,6 @@
 # OmniTUI — builtin components
 
-This document describes the official `Row`, `Column`, `Text`, `Input`, `Tabs`, and `List` components exported by the public `omnitui/components` package. Signatures and props are documented in [API.md](API.md); the rendering model is described in [DESIGN.md](DESIGN.md).
+This document describes the official `Row`, `Column`, `Text`, `Input`, `Dropdown`, `Tabs`, and `List` components exported by the public `omnitui/components` package. Signatures and props are documented in [API.md](API.md); the rendering model is described in [DESIGN.md](DESIGN.md).
 
 ## 1. Conventions
 
@@ -8,7 +8,7 @@ This document describes the official `Row`, `Column`, `Text`, `Input`, `Tabs`, a
 - `Row`, `Column`, and `List` receive children.
 - `Tabs` receives its panels as `Element` values inside `TabItem`.
 - `Text` and `Input` are leaves and do not receive children.
-- `Input`, `Tabs`, and `List` are controlled: the public value comes from props, and events propose changes to the parent component.
+- `Input`, `Dropdown`, `Tabs`, and `List` are controlled: the public value comes from props, and events propose changes to the parent component.
 - Internal state stores only interaction details such as the cursor, local focus, and scroll offset.
 - Handlers return `omnitui.Propagate` or `omnitui.Consume` according to the event contract.
 - `UseFocus` handles attach through the `Focus` prop of `Box`, `Button`, `Input`, `Tabs`, and `List`; a `Box` must also set `Focusable`, and a `List` must set `Selectable`.
@@ -28,6 +28,7 @@ import (
 | `Column` | Vertical layout | Yes | No |
 | `Text` | Static text | No | No |
 | `Input` | Single-line text editing | No | Cursor and horizontal scroll |
+| `Dropdown` | Select one option from a compact menu | Via `DropdownOption` | Open state and active option |
 | `Tabs` | Navigation between panels | Via `TabItem.Content` | Focused header |
 | `List` | Selectable, scrollable list | Yes | Focus and vertical offset |
 
@@ -150,7 +151,39 @@ func renderNameInput(ctx omnitui.Context, state FormState) omnitui.Element {
 }
 ```
 
-## 6. `Tabs`
+## 6. `Dropdown`
+
+Displays the selected option as a compact control and opens a layered menu when activated. The menu overlaps the content below it instead of consuming layout height. Selection is controlled by `SelectedKey`; accepting `OnChange` in parent state updates the displayed value.
+
+Signature and props: [API.md — `Dropdown`](API.md#dropdown).
+
+Keys must be unique and stable. Disabled options remain visible but are skipped by keyboard navigation and cannot be activated. `MenuHeight` bounds the list viewport and enables its scrollbar when necessary. The overlay is clipped to the available terminal area. `Wrap` allows navigation to continue at the opposite edge.
+
+### Example
+
+```go
+return components.Dropdown(components.DropdownProps{
+    Options: []components.DropdownOption{
+        {Key: "stable", Label: "Stable"},
+        {Key: "preview", Label: "Preview"},
+        {Key: "nightly", Label: "Nightly", Disabled: true},
+    },
+    SelectedKey: state.Channel,
+    Placeholder: "Choose a channel",
+    MenuHeight:  omnitui.Cells(3),
+    OnChange: func(event omnitui.ValueChangeEvent) omnitui.EventResult {
+        omnitui.UpdateState(ctx, func(current ScreenState) ScreenState {
+            current.Channel = event.Value
+            return current
+        })
+        return omnitui.Consume
+    },
+})
+```
+
+The complete executable example is in [`examples/dropdown`](../examples/dropdown/main.go).
+
+## 7. `Tabs`
 
 Displays a tab bar and the active panel. Selection is controlled by `ActiveKey`.
 
@@ -195,7 +228,7 @@ func renderTabs(ctx omnitui.Context, state ScreenState) omnitui.Element {
 }
 ```
 
-## 7. `List`
+## 8. `List`
 
 Displays children as selectable items in a vertical viewport. Every direct child must have `WithKey`; the key identifies selection and preserves identity during reordering.
 
@@ -284,14 +317,27 @@ func renderProjects(ctx omnitui.Context, state ProjectState) omnitui.Element {
 }
 ```
 
-## 8. Lower-level building blocks
+## 9. Lower-level building blocks
 
-- `Box`: exported by `components`; a configurable container with direction, size, padding, gap, alignment, border, style, and clipping.
+- `Box`: exported by `components`; a configurable container with direction, size, padding, gap, alignment, border label, style, and clipping.
 - `Button`: exported by `components`; a focusable control with a label and `OnPress`.
 - `Fragment`: belongs to `omnitui` and groups elements without creating layout.
 - `None`: belongs to `omnitui` and represents the absence of an element.
 
 `Row` and `Column` should be the usual layout choices. `Box` is available when direction must be dynamic or lower-level capabilities are needed.
+
+Set `BoxProps.Label` together with a border to place a title over the top border:
+
+```go
+components.Box(
+    components.BoxProps{
+        Border:  components.BorderRounded,
+        Label:   "Settings",
+        Padding: omnitui.All(1),
+    },
+    content,
+)
+```
 
 ### Programmatic focus
 
@@ -318,7 +364,7 @@ return components.Column(
 
 The handle keeps the same binding while its component instance and hook key are preserved. Calling `Blur` releases focus only when its bound host is currently focused.
 
-## 9. Builtin acceptance criteria
+## 10. Builtin acceptance criteria
 
 1. All are exported by `omnitui/components` and use the core reconciler.
 2. Props and children are never mutated internally.
@@ -326,9 +372,10 @@ The handle keeps the same binding while its component instance and hook key are 
 4. `Text` correctly measures, wraps, and truncates graphemes with variable width.
 5. `Input` keeps a valid cursor when `Value` changes externally.
 6. `Tabs` validates keys and never activates a disabled tab.
-7. `List` preserves its key anchor and selection during insertion and reordering.
-8. `List` reveals an item after selection changes and preserves its visibility during resize when it was already visible.
-9. `List` correctly clamps its offset with variable-height items, a small viewport, and an empty list.
-10. `Input`, `Tabs`, and `List` respond to clicks; `List` responds to wheel input without changing selection.
-11. All events follow the ordering and propagation defined in [API.md](API.md).
-12. All work with the headless backend and have examples compiled as tests.
+7. `Dropdown` validates keys, skips disabled options, and keeps selection controlled.
+8. `List` preserves its key anchor and selection during insertion and reordering.
+9. `List` reveals an item after selection changes and preserves its visibility during resize when it was already visible.
+10. `List` correctly clamps its offset with variable-height items, a small viewport, and an empty list.
+11. `Input`, `Dropdown`, `Tabs`, and `List` respond to clicks; `List` responds to wheel input without changing selection.
+12. All events follow the ordering and propagation defined in [API.md](API.md).
+13. All work with the headless backend and have examples compiled as tests.
