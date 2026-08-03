@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/omnitui/omnitui/compare/v2.1.0...v2.1.1) (2026-08-03)
+
+
+### Bug Fixes
+
+* input events and list rendering ([856d518](https://github.com/omnitui/omnitui/commit/856d518901220fa94d9507ada9132abd6a76866b))
+
 ## [2.1.0](https://github.com/omnitui/omnitui/compare/v2.0.0...v2.1.0) (2026-07-30)
 
 
