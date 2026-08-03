@@ -724,6 +724,9 @@ func arrangeList(i *instance, data core.ListData) {
 	if i.listOffset > maxOffset {
 		i.listOffset = maxOffset
 	}
+	if i.listOffset < 0 {
+		i.listOffset = 0
+	}
 	y := content.Y - i.listOffset
 	for index, child := range i.children {
 		var override *Style

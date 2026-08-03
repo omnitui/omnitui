@@ -402,16 +402,20 @@ func (app *App) positionInputCursor(input *instance, x int) {
 		return
 	}
 	graphemes := uitext.Graphemes(data.Value)
-	input.inputCursor = clamp(input.inputOffset, 0, len(graphemes))
+	cursor := clamp(input.inputOffset, 0, len(graphemes))
 	used := 0
 	for index := input.inputOffset; index < len(graphemes); index++ {
 		width := uitext.Width(graphemes[index])
-		if x < used+maxInt(width, 1)/2 {
-			input.inputCursor = index
-			return
+		if x < used+(maxInt(width, 1)+1)/2 {
+			cursor = index
+			break
 		}
 		used += width
-		input.inputCursor = index + 1
+		cursor = index + 1
+	}
+	if cursor != input.inputCursor {
+		input.inputCursor = cursor
+		app.invalidated = true
 	}
 }
 

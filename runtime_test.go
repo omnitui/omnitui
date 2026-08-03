@@ -163,6 +163,36 @@ func TestFillUsesAvailableSpace(t *testing.T) {
 	}
 }
 
+func TestListScrollPaddingAtStartDoesNotShiftItems(t *testing.T) {
+	items := []Element{
+		core.NewHost(core.HostText, core.TextData{Content: "first"}, nil).WithKey("first"),
+		core.NewHost(core.HostText, core.TextData{Content: "second"}, nil).WithKey("second"),
+		core.NewHost(core.HostText, core.TextData{Content: "third"}, nil).WithKey("third"),
+	}
+	root := core.NewHost(
+		core.HostList,
+		core.ListData{
+			Height:        core.CellsSize(3),
+			Selectable:    true,
+			SelectedKey:   "first",
+			ScrollPadding: 1,
+		},
+		items,
+	)
+	app := New(root, Options{})
+	app.width, app.height = 10, 3
+
+	if err := app.render(); err != nil {
+		t.Fatal(err)
+	}
+	if got := app.rootInstance.listOffset; got != 0 {
+		t.Fatalf("list offset = %d, want 0", got)
+	}
+	if got := app.rootInstance.children[0].rect.Y; got != 0 {
+		t.Fatalf("first item Y = %d, want 0", got)
+	}
+}
+
 func TestOverlayDoesNotConsumeLayoutAndPaintsAboveSiblings(t *testing.T) {
 	anchor := core.NewHost(core.HostText, core.TextData{Content: "anchor"}, nil)
 	menu := core.NewHost(core.HostText, core.TextData{Content: "menu"}, nil)
