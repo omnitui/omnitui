@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/omnitui/omnitui/compare/v2.1.1...v2.2.0) (2026-08-04)
+
+
+### Features
+
+* add editor and grid components ([6c97ce2](https://github.com/omnitui/omnitui/commit/6c97ce2d186485a85afc9bb9ba3767abf6426f0b))
+
 ## [2.1.1](https://github.com/omnitui/omnitui/compare/v2.1.0...v2.1.1) (2026-08-03)
 
 
