@@ -1,17 +1,17 @@
 # OmniTUI — builtin components
 
-This document describes the official `Row`, `Column`, `Text`, `Input`, `Dropdown`, `Tabs`, and `List` components exported by the public `omnitui/components` package. Signatures and props are documented in [API.md](API.md); the rendering model is described in [DESIGN.md](DESIGN.md).
+This document describes the official `Row`, `Column`, `Grid`, `Text`, `Input`, `Editor`, `Dropdown`, `Tabs`, and `List` components exported by the public `omnitui/components` package. Signatures and props are documented in [API.md](API.md); the rendering model is described in [DESIGN.md](DESIGN.md).
 
 ## 1. Conventions
 
 - All builtins receive props.
-- `Row`, `Column`, and `List` receive children.
+- `Row`, `Column`, `Grid`, and `List` receive children.
 - `Tabs` receives its panels as `Element` values inside `TabItem`.
-- `Text` and `Input` are leaves and do not receive children.
-- `Input`, `Dropdown`, `Tabs`, and `List` are controlled: the public value comes from props, and events propose changes to the parent component.
+- `Text`, `Input`, and `Editor` are leaves and do not receive children.
+- `Input`, `Editor`, `Dropdown`, `Tabs`, and `List` are controlled: the public value comes from props, and events propose changes to the parent component.
 - Internal state stores only interaction details such as the cursor, local focus, and scroll offset.
 - Handlers return `omnitui.Propagate` or `omnitui.Consume` according to the event contract.
-- `UseFocus` handles attach through the `Focus` prop of `Box`, `Button`, `Input`, `Tabs`, and `List`; a `Box` must also set `Focusable`, and a `List` must set `Selectable`.
+- `UseFocus` handles attach through the `Focus` prop of `Box`, `Button`, `Input`, `Editor`, `Tabs`, and `List`; a `Box` must also set `Focusable`, and a `List` must set `Selectable`.
 - `omnitui.Cells(n)` creates a cell-sized `Size`; `omnitui.Fill()` occupies the space available from the parent; `omnitui.All(n)` creates equal spacing on all four sides.
 - Examples use `omnitui` for the core and `components` for builtins; they represent snippets from a `Render` method and omit error handling.
 
@@ -26,8 +26,10 @@ import (
 |---|---|---:|---|
 | `Row` | Horizontal layout | Yes | No |
 | `Column` | Vertical layout | Yes | No |
+| `Grid` | Bordered panels with draggable internal dividers | Yes | Panel sizes and active drag |
 | `Text` | Static text | No | No |
 | `Input` | Single-line text editing | No | Cursor and horizontal scroll |
+| `Editor` | Multiline text editing and syntax highlighting | No | Cursor, two-axis scroll, and scrollbar |
 | `Dropdown` | Select one option from a compact menu | Via `DropdownOption` | Open state and active option |
 | `Tabs` | Navigation between panels | Via `TabItem.Content` | Focused header |
 | `List` | Selectable, scrollable list | Yes | Focus and vertical offset |
@@ -89,7 +91,35 @@ return components.Column(
 )
 ```
 
-## 4. `Text`
+## 4. `Grid`
+
+Arranges children as adjacent bordered panels. Each child is automatically wrapped in a clipped `Box`, so applications provide panel content without adding another border. Neighboring panels share their touching border instead of rendering a two-cell gap. Shared borders are always painted with double-line glyphs to identify them as draggable; `Border` continues to define the remaining box borders.
+
+Signature and props: [API.md — `Grid`](API.md#grid).
+
+`OrientationHorizontal` lays panels out from left to right and lets the user change their widths. `OrientationVertical` lays panels out from top to bottom and changes their heights. A resize starts only when the left mouse button is pressed on a border shared by two children. Moving the pointer changes that adjacent pair while preserving their combined size; releasing the button finishes the interaction. Outer borders and content never start a resize.
+
+Panels begin equally distributed. `MinPanelSize` defaults to 3 cells, including both border cells, and bounds both panels involved in a drag whenever the available space permits it. Mounted grids retain adjusted sizes across ordinary parent renders and fit them back into the available area after a resize. Changing orientation or the number of children resets the equal distribution.
+
+```go
+return components.Grid(
+    components.GridProps{
+        Width:        omnitui.Fill(),
+        Height:       omnitui.Cells(12),
+        Orientation:  components.OrientationHorizontal,
+        MinPanelSize: 5,
+        Border:       components.BorderSingle,
+        Style:        panelStyle,
+    },
+    explorerContent(),
+    editorContent(),
+    previewContent(),
+)
+```
+
+The complete executable example switches between both orientations in [`examples/grid`](../examples/grid/main.go).
+
+## 5. `Text`
 
 Renders static text, does not receive focus, and does not accept children.
 
@@ -112,7 +142,7 @@ return components.Text(components.TextProps{
 })
 ```
 
-## 5. `Input`
+## 6. `Input`
 
 Controlled, focusable, single-line text field. The displayed value always comes from `Value`; `OnChange` proposes a new value, and the parent must update its state to accept it.
 
@@ -151,7 +181,58 @@ func renderNameInput(ctx omnitui.Context, state FormState) omnitui.Element {
 }
 ```
 
-## 6. `Dropdown`
+## 7. `Editor`
+
+Controlled, focusable multiline text editor. The displayed content always comes from `Value`; `OnChange` proposes edits and the parent accepts them by updating state.
+
+Signature and props: [API.md — `Editor`](API.md#editor).
+
+Printable input, paste, `Enter`, Backspace, and Delete edit the document. Arrow keys, Home, End, PageUp, and PageDown navigate. The viewport follows keyboard edits and navigation, while mouse-wheel scrolling may temporarily move away from the cursor. A left click positions the cursor using terminal-cell width, including wide graphemes and tab stops. `Tab` remains the framework focus-navigation key; `TabWidth` controls existing tab graphemes and defaults to 4.
+
+With `ReadOnly: true`, insertion, paste, Enter, Backspace, and Delete do not propose a new value. The editor still receives focus, paints its cursor, accepts mouse positioning, navigates with the keyboard, and scrolls normally. Use `Disabled` when the control must not receive focus or interaction at all.
+
+The vertical `Scrollbar` uses the shared modes also accepted by `List`: `ScrollbarAuto` appears only when the document overflows, `ScrollbarAlways` always reserves the last column, and `ScrollbarHidden` draws nothing. The visible bar reserves its column so highlighted text and the cursor are never painted underneath it. The thumb follows keyboard and wheel scrolling; dragging the scrollbar itself is outside the initial scope.
+
+### Syntax highlighting
+
+`Highlighter` receives one logical line at a time and returns `HighlightSpan` values. `Start` is inclusive, `End` is exclusive, and both use grapheme indexes. Styles are layered over the editor's current base/focus style in slice order. The callback must be deterministic and return promptly because it runs during component rendering.
+
+```go
+func highlight(line string, _ int) []components.HighlightSpan {
+    if line == "package main" {
+        return []components.HighlightSpan{{
+            Start: 0,
+            End:   7,
+            Style: omnitui.Style{
+                Foreground: omnitui.ANSI(omnitui.BrightMagenta),
+                Attributes: omnitui.Bold,
+            },
+        }}
+    }
+    return nil
+}
+
+return components.Editor(components.EditorProps{
+    Value:       state.Source,
+    Width:       omnitui.Fill(),
+    Height:      omnitui.Cells(12),
+    Scrollbar:   components.ScrollbarAuto,
+    Highlighter: highlight,
+    OnChange: func(event omnitui.ValueChangeEvent) omnitui.EventResult {
+        omnitui.UpdateState(ctx, func(current EditorState) EditorState {
+            current.Source = event.Value
+            return current
+        })
+        return omnitui.Consume
+    },
+})
+```
+
+The complete executable example, including a lightweight Go highlighter, is in [`examples/editor`](../examples/editor/main.go).
+
+Selection, undo/redo, diagnostics, completion, and bundled language parsers are outside this component's initial scope.
+
+## 8. `Dropdown`
 
 Displays the selected option as a compact control and opens a layered menu when activated. The menu overlaps the content below it instead of consuming layout height. Selection is controlled by `SelectedKey`; accepting `OnChange` in parent state updates the displayed value.
 
@@ -183,7 +264,7 @@ return components.Dropdown(components.DropdownProps{
 
 The complete executable example is in [`examples/dropdown`](../examples/dropdown/main.go).
 
-## 7. `Tabs`
+## 9. `Tabs`
 
 Displays a tab bar and the active panel. Selection is controlled by `ActiveKey`.
 
@@ -228,7 +309,7 @@ func renderTabs(ctx omnitui.Context, state ScreenState) omnitui.Element {
 }
 ```
 
-## 8. `List`
+## 10. `List`
 
 Displays children as selectable items in a vertical viewport. Every direct child must have `WithKey`; the key identifies selection and preserves identity during reordering.
 
@@ -317,7 +398,7 @@ func renderProjects(ctx omnitui.Context, state ProjectState) omnitui.Element {
 }
 ```
 
-## 9. Lower-level building blocks
+## 11. Lower-level building blocks
 
 - `Box`: exported by `components`; a configurable container with direction, size, padding, gap, alignment, border label, style, and clipping.
 - `Button`: exported by `components`; a focusable control with a label and `OnPress`.
@@ -364,18 +445,20 @@ return components.Column(
 
 The handle keeps the same binding while its component instance and hook key are preserved. Calling `Blur` releases focus only when its bound host is currently focused.
 
-## 10. Builtin acceptance criteria
+## 12. Builtin acceptance criteria
 
 1. All are exported by `omnitui/components` and use the core reconciler.
 2. Props and children are never mutated internally.
 3. `Row` and `Column` preserve the identity and keys of their children.
 4. `Text` correctly measures, wraps, and truncates graphemes with variable width.
-5. `Input` keeps a valid cursor when `Value` changes externally.
-6. `Tabs` validates keys and never activates a disabled tab.
-7. `Dropdown` validates keys, skips disabled options, and keeps selection controlled.
-8. `List` preserves its key anchor and selection during insertion and reordering.
-9. `List` reveals an item after selection changes and preserves its visibility during resize when it was already visible.
-10. `List` correctly clamps its offset with variable-height items, a small viewport, and an empty list.
-11. `Input`, `Dropdown`, `Tabs`, and `List` respond to clicks; `List` responds to wheel input without changing selection.
-12. All events follow the ordering and propagation defined in [API.md](API.md).
-13. All work with the headless backend and have examples compiled as tests.
+5. `Grid` wraps every child in a bordered panel and resizes only adjacent panels from shared internal borders.
+6. `Input` keeps a valid cursor when `Value` changes externally.
+7. `Editor` edits multiple lines, keeps the cursor visible beside its vertical scrollbar, scrolls on both axes, applies validated grapheme-based highlights, and preserves cursor navigation while read-only.
+8. `Tabs` validates keys and never activates a disabled tab.
+9. `Dropdown` validates keys, skips disabled options, and keeps selection controlled.
+10. `List` preserves its key anchor and selection during insertion and reordering.
+11. `List` reveals an item after selection changes and preserves its visibility during resize when it was already visible.
+12. `List` correctly clamps its offset with variable-height items, a small viewport, and an empty list.
+13. `Input`, `Editor`, `Dropdown`, `Tabs`, and `List` respond to clicks; `Grid` responds to internal-border drags; `Editor` and `List` respond to wheel input without changing their controlled values.
+14. All events follow the ordering and propagation defined in [API.md](API.md).
+15. All work with the headless backend and have examples compiled as tests.

@@ -10,6 +10,8 @@ const (
 	HostTabs
 	HostList
 	HostOverlay
+	HostEditor
+	HostGrid
 )
 
 // Host is the normalized data consumed by reconciliation, layout and paint.
@@ -55,6 +57,12 @@ func cloneHostData(data any) any {
 		return value
 	case ListData:
 		value.Handlers = cloneHandlers(value.Handlers)
+		return value
+	case EditorData:
+		value.Highlights = cloneHighlights(value.Highlights)
+		value.Handlers = cloneHandlers(value.Handlers)
+		return value
+	case GridData:
 		return value
 	case OverlayData:
 		return value
@@ -122,6 +130,42 @@ type InputData struct {
 	Style, FocusStyle  Style
 	Focus              any
 	Handlers           Handlers
+}
+
+type HighlightSpan struct {
+	Start, End int
+	Style      Style
+}
+
+type EditorData struct {
+	Value, Placeholder string
+	Width, Height      Size
+	Disabled, ReadOnly bool
+	TabWidth           int
+	Scrollbar          uint8
+	Style, FocusStyle  Style
+	Highlights         [][]HighlightSpan
+	Focus              any
+	Handlers           Handlers
+}
+
+type GridData struct {
+	Width, Height Size
+	Orientation   uint8
+	MinPanelSize  int
+	Border        uint8
+	Style         Style
+}
+
+func cloneHighlights(values [][]HighlightSpan) [][]HighlightSpan {
+	if len(values) == 0 {
+		return nil
+	}
+	result := make([][]HighlightSpan, len(values))
+	for index, spans := range values {
+		result[index] = append([]HighlightSpan(nil), spans...)
+	}
+	return result
 }
 
 type TabData struct {

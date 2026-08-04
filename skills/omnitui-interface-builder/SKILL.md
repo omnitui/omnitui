@@ -46,6 +46,8 @@ Start with one structural container and divide the screen into named regions:
 - Use `Row` for toolbars, form fields, metric cards, and side-by-side panels.
 - Use `Text` for labels, descriptions, status lines, and empty states.
 - Use `Input` for controlled single-line editing.
+- Use `Editor` for controlled multiline editing and callback-driven syntax highlighting.
+- Use `Grid` for adjacent bordered panels whose shared dividers resize with the mouse.
 - Use `Dropdown` for selecting one value from a compact set of keyed options.
 - Use `Button` for explicit actions.
 - Use `Tabs` for mutually exclusive panels.
@@ -55,7 +57,7 @@ Keep a predictable hierarchy: outer surface → header → navigation/content �
 
 ### 4. Make interactive components controlled
 
-`Input`, `Dropdown`, `Tabs`, and `List` receive their public value from props. Their events propose a new value; accept it by updating the parent state.
+`Input`, `Editor`, `Dropdown`, `Tabs`, and `List` receive their public value from props. Their events propose a new value; accept it by updating the parent state.
 
 ```go
 components.Tabs(components.TabsProps{
@@ -74,7 +76,7 @@ components.Tabs(components.TabsProps{
 })
 ```
 
-Apply the same pattern to `Input.OnChange`, `Input.OnSubmit`, `Dropdown.OnChange`, `List.OnChange`, and `List.OnActivate`. Give every dropdown option, tab, and direct `List` child a unique, stable key.
+Apply the same pattern to `Input.OnChange`, `Input.OnSubmit`, `Editor.OnChange`, `Dropdown.OnChange`, `List.OnChange`, and `List.OnActivate`. Give every dropdown option, tab, and direct `List` child a unique, stable key.
 
 ### 5. Add visual hierarchy
 
@@ -115,7 +117,10 @@ If the interface is interactive, exercise keyboard traversal, Enter/Space activa
 
 ## Layout rules
 
-- Set `Gap` and `Padding` deliberately; use `omnitui.All(n)` for equal inset and `omnitui.XY(horizontal, vertical)` for asymmetric spacing.
+- Default to `Gap: 0` and zero `Padding`; omit both props unless spacing has a concrete layout purpose.
+- Add the smallest useful spacing, usually one cell, only to separate semantic groups, keep content off a border, or preserve control readability and hit targets. Use `omnitui.All(n)` for equal inset and `omnitui.XY(horizontal, vertical)` for asymmetric spacing.
+- Avoid compounded whitespace from a parent `Gap` plus child `Padding`, nested padded containers, spacer-only elements, or repeated blank rows. Prefer a single spacing owner at the nearest common container.
+- Before finishing a screen, remove each `Gap` and `Padding` in turn and keep it removed when hierarchy, readability, and interaction remain clear.
 - Use `BoxProps.Label` with a border when a panel needs a title on its top edge.
 - Use `omnitui.Cells(n)` for stable terminal dimensions and `omnitui.Auto()` when content should determine size.
 - Keep fixed-width sibling panels narrow enough for common terminal widths. Avoid adding several unconstrained fixed-width columns in one `Row`.
@@ -135,12 +140,14 @@ If the interface is interactive, exercise keyboard traversal, Enter/Space activa
 | Vertical group | `Column` | Children share a vertical axis; use `Gap` and `Padding`. |
 | Static content | `Text` | Leaf component; use wrapping and truncation for prose. |
 | Text editing | `Input` | Controlled by `Value`; accept changes through `OnChange`. |
+| Multiline editing | `Editor` | Use a finite viewport and return grapheme-indexed `HighlightSpan` values. |
+| Resizable panels | `Grid` | Choose an orientation, provide plain child content, and drag only shared internal borders. |
 | Compact selection | `Dropdown` | Use unique option keys, controlled `SelectedKey`, and `OnChange`. |
 | Action | `Button` | Handle `OnPress`; define both `Style` and `FocusStyle`. |
 | Panel navigation | `Tabs` | Use unique keys, controlled `ActiveKey`, and an `OnChange` handler. |
 | Selectable viewport | `List` | Key every item, control `SelectedKey`, and use `OnActivate` for Enter. |
 
-`Box` and `Button` are lower-level building blocks; `Row`, `Column`, `Text`, `Input`, `Dropdown`, `Tabs`, and `List` are the usual application-level components.
+`Box` and `Button` are lower-level building blocks; `Row`, `Column`, `Grid`, `Text`, `Input`, `Editor`, `Dropdown`, `Tabs`, and `List` are the usual application-level components.
 
 ## Interaction patterns
 
@@ -151,6 +158,23 @@ If the interface is interactive, exercise keyboard traversal, Enter/Space activa
 - Put the label, input, and action in a `Row` or a compact `Column`.
 - Render validation or submission feedback as a separate `Text` with a semantic style.
 - Avoid mutating state in `Render`.
+
+### Editors
+
+- Keep source text in parent state and accept edits through `OnChange`.
+- Give the editor a finite `Height` when it shares a screen with other content.
+- Return half-open highlight spans indexed by grapheme, never by byte offset.
+- Keep the highlighter deterministic and fast because it runs during rendering.
+- Use `ScrollbarAuto` for bounded editors when users benefit from seeing their vertical position.
+- Use `ReadOnly` to block edits while preserving focus, cursor positioning, navigation, and scrolling; use `Disabled` to remove interaction.
+
+### Grids
+
+- Pass panel content directly; `Grid` adds and clips each bordered box.
+- Use `OrientationHorizontal` for draggable widths and `OrientationVertical` for draggable heights.
+- Treat the double internal dividers as the grid's draggable affordance; outer borders are not resize handles.
+- Set `MinPanelSize` high enough for each panel's smallest useful content.
+- Verify that content and outer-border clicks do not begin a resize.
 
 ### Tabs
 
@@ -203,8 +227,6 @@ func (screen) Render(ctx omnitui.Context, _ string, state screenState, _ omnitui
 	return components.Box(
 		components.BoxProps{
 			Direction: components.Vertical,
-			Padding:   omnitui.All(1),
-			Gap:       1,
 			Border:    components.BorderRounded,
 			Clip:      true,
 			Style:     surfaceStyle,
@@ -222,11 +244,12 @@ Keep helper functions pure with respect to rendering: accept `ctx` and state, re
 ## Common failure modes
 
 - Do not store mutable state in a component value passed to `omnitui.Define`; mounted occurrences must own independent state.
-- Do not pass children to `Text` or `Input`; they are leaves.
+- Do not pass children to `Text`, `Input`, or `Editor`; they are leaves.
 - Do not omit keys from `List` items or reuse keys for unrelated items.
 - Do not make `Dropdown`, `Tabs`, or `List` appear interactive without wiring the corresponding controlled state handler.
 - Do not update state during `Render`.
 - Do not use negative dimensions, gaps, padding, or `MaxLines`.
+- Do not add `Gap` or `Padding` by habit, copy it into every nested container, or use both to create the same visual separation.
 - Do not create a giant `Row` of unconstrained content that cannot fit a normal terminal.
 - Do not use a border, color, or attribute as the only way to communicate focus or selection.
 - Do not assume mouse support is available; every important action must remain keyboard accessible.
@@ -236,9 +259,10 @@ Keep helper functions pure with respect to rendering: accept `ctx` and state, re
 - [ ] Read the repository API and component documentation.
 - [ ] Define explicit component state and stable keys.
 - [ ] Build a clear `Box`/`Row`/`Column` hierarchy.
-- [ ] Keep `Input`, `Dropdown`, `Tabs`, and `List` controlled by parent state.
+- [ ] Keep `Input`, `Editor`, `Dropdown`, `Tabs`, and `List` controlled by parent state.
 - [ ] Add visible focus and selection styles.
 - [ ] Handle keyboard traversal and activation.
 - [ ] Exercise mouse and wheel behavior where supported.
+- [ ] Remove unnecessary gaps, padding, spacer elements, and blank rows.
 - [ ] Verify wrapping, truncation, clipping, and resize behavior.
 - [ ] Run `gofmt`, `go test ./...`, `go test -race ./...`, `go vet ./...`, and `go build ./examples/...`.

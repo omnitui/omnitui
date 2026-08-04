@@ -12,7 +12,7 @@ import (
 ```
 
 - `omnitui`: elements, components, state, context, hooks, runtime, events, geometry, and styles.
-- `omnitui/components`: `Box`, `Row`, `Column`, `Text`, `Button`, `Input`, `Dropdown`, `Tabs`, and `List`.
+- `omnitui/components`: `Box`, `Row`, `Column`, `Grid`, `Text`, `Button`, `Input`, `Editor`, `Dropdown`, `Tabs`, and `List`.
 
 The module path is `github.com/omnitui/omnitui/v2`, as defined in `go.mod`.
 
@@ -176,7 +176,7 @@ func (focus FocusHandle) Blur()
 func (focus FocusHandle) Focused() bool
 ```
 
-Attach a handle to the `Focus` prop of exactly one focusable `Box`, `Button`, `Input`, `Tabs`, or selectable `List`. `Request` and `Blur` enqueue work and may be called from handlers or other goroutines, but not during `Render`. Requests for a disabled, hidden, unmounted, or non-focusable target are ignored. The zero `FocusHandle` is inert.
+Attach a handle to the `Focus` prop of exactly one focusable `Box`, `Button`, `Input`, `Editor`, `Tabs`, or selectable `List`. `Request` and `Blur` enqueue work and may be called from handlers or other goroutines, but not during `Render`. Requests for a disabled, hidden, unmounted, or non-focusable target are ignored. The zero `FocusHandle` is inert.
 
 ## 6. Runtime — `omnitui`
 
@@ -410,6 +410,13 @@ const (
     OrientationHorizontal Orientation = iota
     OrientationVertical
 )
+
+type ScrollbarMode uint8
+const (
+    ScrollbarAuto ScrollbarMode = iota
+    ScrollbarAlways
+    ScrollbarHidden
+)
 ```
 
 ### `Box`
@@ -498,6 +505,24 @@ type ColumnProps struct {
 func Column(props ColumnProps, children ...omnitui.Element) omnitui.Element
 ```
 
+### `Grid`
+
+```go
+type GridProps struct {
+    Width, Height omnitui.Size
+    Orientation   Orientation
+    MinPanelSize  int
+    Border        BorderStyle
+    Style         omnitui.Style
+}
+
+func Grid(props GridProps, children ...omnitui.Element) omnitui.Element
+```
+
+`Grid` places every child inside an automatically clipped, bordered `Box`. Adjacent boxes share one border cell. Every shared, draggable divider is drawn as a double line so it remains visually distinct from non-draggable outer borders. With `OrientationHorizontal`, dragging an internal border with the left mouse button changes the widths of the two adjacent panels; with `OrientationVertical`, it changes their heights. Outer borders and panel content do not start a resize.
+
+Panels start equally sized. Their sizes are interaction state retained by the mounted grid, while an orientation or child-count change starts a new equal distribution. `MinPanelSize` includes the border cells and defaults to 3. An omitted `Border` uses `BorderSingle`; a grid always has borders.
+
 ### `Text`
 
 ```go
@@ -568,6 +593,55 @@ func Input(props InputProps) omnitui.Element
 
 `Input` is controlled by `Value`; `OnChange` only proposes a new value. `MaxLength` counts graphemes. `Mask` changes painting only. A left click positions the cursor at the nearest visual grapheme.
 
+### `Editor`
+
+```go
+type HighlightSpan struct {
+    Start int
+    End   int
+    Style omnitui.Style
+}
+
+type SyntaxHighlighter func(
+    line string,
+    lineIndex int,
+) []HighlightSpan
+
+type EditorProps struct {
+    Value       string
+    Placeholder string
+    Width       omnitui.Size
+    Height      omnitui.Size
+    Disabled    bool
+    ReadOnly    bool
+    TabWidth    int
+    Scrollbar   ScrollbarMode
+    Style       omnitui.Style
+    FocusStyle  omnitui.Style
+    Highlighter SyntaxHighlighter
+    Focus       omnitui.FocusHandle
+
+    OnChange    omnitui.EventHandler[omnitui.ValueChangeEvent]
+    OnKey       omnitui.EventHandler[omnitui.KeyEvent]
+    OnTextInput omnitui.EventHandler[omnitui.TextInputEvent]
+    OnPaste     omnitui.EventHandler[omnitui.PasteEvent]
+    OnFocus     omnitui.EventHandler[omnitui.FocusEvent]
+    OnBlur      omnitui.EventHandler[omnitui.BlurEvent]
+    OnMouse     omnitui.EventHandler[omnitui.MouseEvent]
+    OnWheel     omnitui.EventHandler[omnitui.WheelEvent]
+}
+
+func Editor(props EditorProps) omnitui.Element
+```
+
+`Editor` is a controlled multiline text viewport. Printable input, paste, `Enter`, `Backspace`, and `Delete` propose a new `Value` through `OnChange`; arrows, `Home`, `End`, `PageUp`, and `PageDown` move the cursor. Mouse clicks position the cursor and wheel input scrolls without changing the value. `TabWidth` defaults to 4 and controls the visual width of tab graphemes.
+
+`ReadOnly` blocks all default mutations and therefore emits no `OnChange` proposal, but the editor remains focusable. Keyboard navigation, mouse cursor positioning, scrolling, focus styles, and cursor painting continue to work. `Disabled` is different: it removes the editor from focus and interaction.
+
+`ScrollbarAuto` reserves the last editor column and displays a vertical track and thumb only when the document has more lines than the viewport. `ScrollbarAlways` always reserves and paints the track; `ScrollbarHidden` preserves scrolling without drawing an indicator. The scrollbar is informational and is not itself draggable.
+
+`Highlighter` runs once per logical line during component rendering. It returns half-open `[Start, End)` ranges measured in graphemes, not bytes or runes. Spans are resolved over `Style` and `FocusStyle` in return order, so later overlapping spans take precedence. Invalid ranges and conflicting styles are props errors. The framework does not bundle a language parser; applications may use a lexer or provide a lightweight callback such as the executable [editor example](../examples/editor/main.go).
+
 ### `Dropdown`
 
 ```go
@@ -627,14 +701,6 @@ Keys must be unique. `ActiveKey == ""` uses the first enabled tab; a missing or 
 ### `List`
 
 ```go
-type ScrollbarMode uint8
-
-const (
-    ScrollbarAuto ScrollbarMode = iota
-    ScrollbarAlways
-    ScrollbarHidden
-)
-
 type ListProps struct {
     SelectedKey   string
     Height        omnitui.Size
@@ -687,14 +753,14 @@ For events without propagation, the return value is ignored, but the signature r
 | Event | Source | Initial target | Propagation |
 |---|---|---|---|
 | `KeyEvent` | Key or ANSI sequence | Focused element | Target through ancestors |
-| `TextInputEvent` | Normalized printable input | Focused `Input` | Target through ancestors |
-| `PasteEvent` | Bracketed paste | Focused `Input` | Target through ancestors |
+| `TextInputEvent` | Normalized printable input | Focused `Input` or `Editor` | Target through ancestors |
+| `PasteEvent` | Bracketed paste | Focused `Input` or `Editor` | Target through ancestors |
 | `MouseEvent` | Pointer movement, button, enter, or leave | Host under pointer or capture target | Target through ancestors, except enter/leave |
 | `WheelEvent` | Terminal wheel or scroll gesture | Host under pointer | Target through ancestors |
 | `FocusEvent` | Element receives focus | New focus | Does not propagate |
 | `BlurEvent` | Element loses focus | Previous focus | Does not propagate |
 | `PressEvent` | Control activation | Pressable `Button` or `Box` | Target through ancestors |
-| `ValueChangeEvent` | `Input`, `Dropdown`, `Tabs`, or `List` proposes a value | Emitting builtin | Does not propagate |
+| `ValueChangeEvent` | `Input`, `Editor`, `Dropdown`, `Tabs`, or `List` proposes a value | Emitting builtin | Does not propagate |
 | `SubmitEvent` | `Enter` in an `Input` | Focused `Input` | Does not propagate |
 | `ActivateEvent` | `Enter` on a `List` item | Focused `List` | Does not propagate |
 | `ResizeEvent` | Terminal dimensions change | Root host | Does not propagate |
@@ -885,7 +951,7 @@ type PasteEvent struct {
 }
 ```
 
-For printable input, the runtime delivers `KeyEvent`, then `TextInputEvent`, and, if both allow default behavior, the `Input` proposes `ValueChangeEvent`. Paste remains a single event and respects the backend’s input limit.
+For printable input, the runtime delivers `KeyEvent`, then `TextInputEvent`, and, if both allow default behavior, the focused `Input` or `Editor` proposes `ValueChangeEvent`. Paste remains a single event and respects the backend’s input limit.
 
 ### Change, submit, and activation
 
@@ -955,12 +1021,13 @@ Direct `Mount`, `Update`, and `Unmount` events are not exposed; lifecycle work b
 | `Box` | `OnKey`, `OnTextInput`, `OnPaste`, `OnFocus`, `OnBlur`, `OnPress`, `OnMouse`, `OnWheel`, `OnResize`, `OnMessage` |
 | `Button` | `OnKey`, `OnFocus`, `OnBlur`, `OnPress`, `OnMouse` |
 | `Input` | `OnKey`, `OnTextInput`, `OnPaste`, `OnFocus`, `OnBlur`, `OnMouse`, `OnChange`, `OnSubmit` |
+| `Editor` | `OnKey`, `OnTextInput`, `OnPaste`, `OnFocus`, `OnBlur`, `OnMouse`, `OnWheel`, `OnChange` |
 | `Dropdown` | `OnChange` |
 | `Tabs` | `OnChange` |
 | `List` | `OnMouse`, `OnWheel`, `OnChange`, `OnActivate` |
-| `Row`, `Column`, `Text` | No direct handlers |
+| `Row`, `Column`, `Grid`, `Text` | No direct handlers |
 
-To make `Row` or `Column` interactive, use a `Box` configured as focusable or create a composite component that renders an interactive surface.
+`Grid` handles divider dragging internally. To add application-defined interaction to `Row` or `Column`, use a `Box` configured as focusable or create a composite component that renders an interactive surface.
 
 ## 12. Usage errors
 
@@ -973,6 +1040,8 @@ The following situations are programming errors and include the component path w
 - focus request or blur during `Render`;
 - children passed to a leaf component;
 - props with negative sizes;
+- negative editor `TabWidth` or invalid syntax-highlight range;
+- invalid grid orientation or border, or a grid `MinPanelSize` smaller than 3;
 - empty or duplicate dropdown option key, or an unknown or disabled `SelectedKey`;
 - missing or disabled active tab;
 - `List` item without a key;

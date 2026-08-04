@@ -72,6 +72,8 @@ func (app *App) dispatchKey(event KeyEvent) {
 		}
 		if input := ancestorHost(target, core.HostInput); input != nil {
 			app.inputInsert(input, string(event.Rune), ChangeKeyboard)
+		} else if editor := ancestorHost(target, core.HostEditor); editor != nil {
+			app.editorInsert(editor, string(event.Rune), ChangeKeyboard)
 		}
 		return
 	}
@@ -83,6 +85,9 @@ func (app *App) dispatchKey(event KeyEvent) {
 		if app.inputKey(input, event) {
 			return
 		}
+	}
+	if editor := ancestorHost(target, core.HostEditor); editor != nil && app.editorKey(editor, event) {
+		return
 	}
 	if list := ancestorHost(target, core.HostList); list != nil && app.listKey(list, event) {
 		return
@@ -110,6 +115,8 @@ func (app *App) dispatchPaste(event PasteEvent) {
 	}
 	if input := ancestorHost(target, core.HostInput); input != nil {
 		app.inputInsert(input, event.Text, ChangePaste)
+	} else if editor := ancestorHost(target, core.HostEditor); editor != nil {
+		app.editorInsert(editor, event.Text, ChangePaste)
 	}
 }
 
@@ -377,6 +384,8 @@ func (app *App) dispatchMouse(event MouseEvent) {
 			}
 			if input := ancestorHost(target, core.HostInput); input != nil {
 				app.positionInputCursor(input, event.X-input.rect.X)
+			} else if editor := ancestorHost(target, core.HostEditor); editor != nil {
+				app.positionEditorCursor(editor, event.X-editor.rect.X, event.Y-editor.rect.Y)
 			}
 			app.capture = target
 			app.pressTarget = pressTarget(target)
@@ -420,6 +429,9 @@ func (app *App) positionInputCursor(input *instance, x int) {
 }
 
 func (app *App) defaultMouse(target *instance, event MouseEvent) bool {
+	if grid := ancestorHost(target, core.HostGrid); grid != nil && app.gridMouse(grid, event) {
+		return true
+	}
 	for _, node := range eventPath(target) {
 		if node.hostKind() == core.HostTabs && event.Action == MouseDown && event.Button == MouseButtonLeft {
 			if key := app.tabAt(node, event.X, event.Y); key != "" {
@@ -483,6 +495,10 @@ func (app *App) dispatchWheel(event WheelEvent) {
 		return
 	}
 	for current := target; current != nil; current = current.parent {
+		if current.hostKind() == core.HostEditor {
+			app.scrollEditor(current, event.DeltaX, event.DeltaY)
+			return
+		}
 		if current.hostKind() == core.HostList {
 			app.scrollList(current, event.DeltaY)
 			return

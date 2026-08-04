@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"strings"
 	"testing"
 
@@ -67,6 +68,41 @@ func TestMouseFocusAndControlledInput(t *testing.T) {
 	}
 	if !strings.Contains(output.String(), "a") {
 		t.Fatal("controlled input never painted inserted text")
+	}
+}
+
+type editorState struct{ Value string }
+type editorComponent struct{ seen *string }
+
+func (editorComponent) InitialState(string) editorState { return editorState{} }
+func (component editorComponent) Render(ctx omnitui.Context, _ string, state editorState, _ omnitui.Children) omnitui.Element {
+	*component.seen = state.Value
+	return components.Editor(components.EditorProps{
+		Value:  state.Value,
+		Width:  omnitui.Cells(8),
+		Height: omnitui.Cells(3),
+		OnChange: func(event omnitui.ValueChangeEvent) omnitui.EventResult {
+			omnitui.UpdateState(ctx, func(current editorState) editorState {
+				current.Value = event.Value
+				return current
+			})
+			return omnitui.Consume
+		},
+	})
+}
+
+func TestControlledEditorAcceptsMultipleLines(t *testing.T) {
+	seen := ""
+	typeValue := omnitui.Define[string, editorState]("EditorScreen", editorComponent{seen: &seen})
+	app := omnitui.New(
+		omnitui.Create(typeValue, "editor"),
+		omnitui.Options{Input: strings.NewReader("a\rb\x03"), Output: io.Discard},
+	)
+	if err := app.Run(context.Background()); !errors.Is(err, omnitui.ErrInterrupted) {
+		t.Fatalf("Run() error = %v, want ErrInterrupted", err)
+	}
+	if seen != "a\nb" {
+		t.Fatalf("editor value = %q, want %q", seen, "a\nb")
 	}
 }
 

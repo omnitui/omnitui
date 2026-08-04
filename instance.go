@@ -31,6 +31,21 @@ type instance struct {
 	style               Style
 	inputCursor         int
 	inputOffset         int
+	editorCursor        int
+	editorRowOffset     int
+	editorColumnOffset  int
+	editorGoalColumn    int
+	editorGoalSet       bool
+	editorManualScroll  bool
+	editorLastValue     string
+	gridSizes           []int
+	gridExtent          int
+	gridOrientation     uint8
+	gridDragging        bool
+	gridDragIndex       int
+	gridDragOrigin      int
+	gridDragFirst       int
+	gridDragSecond      int
 	tabFocus            string
 	listOffset          int
 	listAnchorKey       string
@@ -54,6 +69,8 @@ func (i *instance) disabled() bool {
 		return data.Disabled
 	case core.InputData:
 		return data.Disabled
+	case core.EditorData:
+		return data.Disabled
 	case core.ListData:
 		return data.Disabled
 	default:
@@ -68,7 +85,7 @@ func (i *instance) focusable() bool {
 	switch data := i.host.Data.(type) {
 	case core.BoxData:
 		return data.Focusable
-	case core.ButtonData, core.InputData, core.TabsData:
+	case core.ButtonData, core.InputData, core.EditorData, core.TabsData:
 		return true
 	case core.ListData:
 		return data.Selectable
@@ -97,6 +114,8 @@ func (i *instance) handlerValue(name string) any {
 	case core.ButtonData:
 		return data.Handlers[name]
 	case core.InputData:
+		return data.Handlers[name]
+	case core.EditorData:
 		return data.Handlers[name]
 	case core.TabsData:
 		return data.Handlers[name]

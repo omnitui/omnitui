@@ -130,6 +130,24 @@ func explicitRootSize(i *instance) (int, int, bool) {
 		if core.SizeModeOf(data.Width) == core.SizeCells {
 			return core.SizeValueOf(data.Width), 1, true
 		}
+	case core.EditorData:
+		width, height := 0, 0
+		if core.SizeModeOf(data.Width) == core.SizeCells {
+			width = core.SizeValueOf(data.Width)
+		}
+		if core.SizeModeOf(data.Height) == core.SizeCells {
+			height = core.SizeValueOf(data.Height)
+		}
+		return width, height, width > 0 || height > 0
+	case core.GridData:
+		width, height := 0, 0
+		if core.SizeModeOf(data.Width) == core.SizeCells {
+			width = core.SizeValueOf(data.Width)
+		}
+		if core.SizeModeOf(data.Height) == core.SizeCells {
+			height = core.SizeValueOf(data.Height)
+		}
+		return width, height, width > 0 || height > 0
 	case core.ListData:
 		if core.SizeModeOf(data.Height) == core.SizeCells {
 			return 0, core.SizeValueOf(data.Height), true
@@ -205,6 +223,10 @@ func measureHost(i *instance, maxWidth, maxHeight int) (int, int) {
 			width = maxWidth
 		}
 		return minInt(width, maxWidth), 1
+	case core.EditorData:
+		return measureEditor(data, maxWidth, maxHeight)
+	case core.GridData:
+		return measureGrid(i, data, maxWidth, maxHeight)
 	case core.TabsData:
 		return measureTabs(i, data, maxWidth, maxHeight)
 	case core.ListData:
@@ -411,6 +433,10 @@ func arrangeNode(i *instance, rect, clip Rect, inherited Style, override *Style)
 			arrangeTabs(i, data)
 		case core.ListData:
 			arrangeList(i, data)
+		case core.EditorData:
+			arrangeEditor(i, data)
+		case core.GridData:
+			arrangeGrid(i, data)
 		default:
 			for _, child := range i.children {
 				arrangeNode(child, rect, clip, i.style, nil)
@@ -857,6 +883,13 @@ func hostStyle(i *instance) Style {
 		if appFocused(i) {
 			style, _ = core.ResolveStyle(style, data.FocusStyle)
 		}
+	case core.EditorData:
+		style = data.Style
+		if appFocused(i) {
+			style, _ = core.ResolveStyle(style, data.FocusStyle)
+		}
+	case core.GridData:
+		style = data.Style
 	case core.TabsData:
 		style = data.Style
 	case core.ListData:
@@ -894,6 +927,10 @@ func paintNode(buffer *screen.Buffer, i *instance) {
 			paintText(buffer, i, label, 0, 0, 1, 0, i.style)
 		case core.InputData:
 			paintInput(buffer, i, data)
+		case core.EditorData:
+			paintEditor(buffer, i, data)
+		case core.GridData:
+			paintGrid(buffer, i, data)
 		case core.TabsData:
 			paintTabs(buffer, i, data)
 		case core.ListData:

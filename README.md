@@ -16,10 +16,12 @@ OmniTUI turns the interface into a tree of immutable elements. The runtime prese
 
 - **Declarative components:** typed props, local state, context, keyed effects and refs, children, and composition.
 - **Predictable reconciliation:** identity by type, position, and key, preserving state across compatible renders.
-- **Ready-to-use builtins:** `Box`, `Row`, `Column`, `Text`, `Button`, `Input`, `Dropdown`, `Tabs`, and `List`.
+- **Ready-to-use builtins:** `Box`, `Row`, `Column`, `Grid`, `Text`, `Button`, `Input`, `Editor`, `Dropdown`, `Tabs`, and `List`.
 - **Terminal layout:** horizontal or vertical direction, sizing, padding, gap, alignment, wrapping, clipping, and borders.
+- **Resizable panels:** horizontal and vertical grids with mouse-draggable internal borders.
 - **MVP interaction:** keyboard, text input, paste, focus, SGR mouse, wheel, resize, and external messages.
 - **Inherited styles:** ANSI 16/256 colors, true color, foreground, background, and attributes such as bold, underline, and dim.
+- **Text editing:** controlled single-line and multiline editors, cursor navigation, scrolling, vertical scrollbar, and callback-driven syntax highlighting.
 - **Unicode and incremental rendering:** visual grapheme width, double buffering, and cell diffs to reduce redraws.
 - **Deterministic testing:** headless backend, integration tests, and a GitHub Actions workflow.
 
@@ -120,6 +122,8 @@ go run .
 | [Tabs](examples/tabs/main.go) | Controlled selection and keyboard navigation | `go run ./examples/tabs` |
 | [Catalog](examples/catalog/main.go) | Controlled list, selection, and scrolling | `go run ./examples/catalog` |
 | [Form](examples/form/main.go) | Controlled input, focus, and submit | `go run ./examples/form` |
+| [Editor](examples/editor/main.go) | Multiline editing, vertical scrollbar, and Go syntax highlighting | `go run ./examples/editor` |
+| [Grid](examples/grid/main.go) | Horizontal and vertical panels resized by dragging their internal borders | `go run ./examples/grid` |
 | [Dropdown](examples/dropdown/main.go) | Controlled option selection in an overlay menu | `go run ./examples/dropdown` |
 | [Counter](examples/counter/main.go) | Local state and button events | `go run ./examples/counter` |
 | [Context](examples/context/main.go) | Updating provider state through a context action | `go run ./examples/context` |
@@ -128,9 +132,10 @@ go run .
 Common controls:
 
 - `Tab` and `Shift+Tab` move focus;
-- arrow keys navigate `Dropdown`, `Tabs`, `List`, and `Input`;
-- `Enter` or `Space` activate controls;
+- arrow keys navigate `Dropdown`, `Tabs`, `List`, `Input`, and `Editor`;
+- `Enter` inserts a line break in `Editor` and activates controls elsewhere; `Space` activates controls;
 - mouse and wheel work in compatible components;
+- dragging an internal `Grid` border resizes its adjacent panels;
 - `Ctrl+C` exits the application.
 
 ## Documentation

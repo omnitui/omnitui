@@ -115,6 +115,8 @@ func focusBindingOf(i *instance) *focusBinding {
 		value = data.Focus
 	case core.InputData:
 		value = data.Focus
+	case core.EditorData:
+		value = data.Focus
 	case core.TabsData:
 		value = data.Focus
 	case core.ListData:

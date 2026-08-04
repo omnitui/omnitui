@@ -14,7 +14,7 @@ import (
 ```
 
 - `omnitui` contains the runtime, elements, components, state, context, and events.
-- `omnitui/components` exports `Box`, `Row`, `Column`, `Text`, `Button`, `Input`, `Tabs`, and `List`.
+- `omnitui/components` exports `Box`, `Row`, `Column`, `Grid`, `Text`, `Button`, `Input`, `Editor`, `Dropdown`, `Tabs`, and `List`.
 
 An application may use a short alias without changing the package’s actual name:
 
@@ -78,6 +78,8 @@ omnitui/
 ├── mouse.go
 ├── hit_testing.go
 ├── runtime.go
+├── editor.go
+├── grid.go
 ├── paint.go
 │
 ├── components/
@@ -88,6 +90,8 @@ omnitui/
 │   ├── text.go
 │   ├── button.go
 │   ├── input.go
+│   ├── editor.go
+│   ├── grid.go
 │   ├── dropdown.go
 │   ├── tabs.go
 │   ├── list.go
@@ -95,6 +99,8 @@ omnitui/
 │   ├── column_test.go
 │   ├── text_test.go
 │   ├── input_test.go
+│   ├── editor_test.go
+│   ├── grid_test.go
 │   ├── dropdown_test.go
 │   ├── tabs_test.go
 │   └── list_test.go
@@ -227,6 +233,7 @@ The root package does not export visual components. In particular, there are no 
 | `dispatch.go` | Serialized queue for state, messages, resize, and input |
 | `focus.go` | Focus order, targets, and recovery after unmount |
 | `mouse.go` | Hover path, capture, button state, and default behavior |
+| `grid.go` | Grid measurement, shared-border layout, and divider dragging |
 | `hit_testing.go` | Target lookup by position, clipping, and paint order |
 | `runtime.go` | Main loop and phase coordination |
 | `paint.go` | Conversion of the positioned host tree to the back buffer |
@@ -246,6 +253,8 @@ These files remain in the root package and keep their internal symbols unexporte
 | `text.go` | `Text`, `TextProps`, wrapping, and truncation |
 | `button.go` | `Button`, `ButtonProps` |
 | `input.go` | `Input`, `InputProps` |
+| `editor.go` | `Editor`, `EditorProps`, `HighlightSpan`, `SyntaxHighlighter` |
+| `grid.go` | `Grid`, `GridProps` |
 | `tabs.go` | `Tabs`, `TabsProps`, `TabItem` |
 | `list.go` | `List`, `ListProps`, `ScrollbarMode` |
 
@@ -253,9 +262,9 @@ Signatures, props, and enums are centralized in [API.md](API.md). This section r
 
 ### 5.2 Implementation
 
-- `Row`, `Column`, `Button`, `Input`, `Tabs`, and `List` use the `omnitui.Component` contract.
+- `Row`, `Column`, `Grid`, `Button`, `Input`, `Editor`, `Tabs`, and `List` use the `omnitui.Component` contract.
 - `Box` and `Text` create hosts through `internal/core`.
-- `Input` uses the private editable host in `internal/core`.
+- `Input`, `Editor`, and `Grid` use private hosts in `internal/core` for interaction state that requires arranged geometry.
 - Public props use fundamental `omnitui` types such as `Style`, `Size`, `Spacing`, and events.
 - No `components` API is required to start or run an application.
 
@@ -416,6 +425,8 @@ components/dropdown.go
 components/tabs.go
 components/list.go
 examples/form/
+examples/editor/
+examples/grid/
 examples/dropdown/
 examples/catalog/
 integration/components_test.go

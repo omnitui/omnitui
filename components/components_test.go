@@ -20,6 +20,7 @@ func (probe focusForwardProbe) Render(ctx omnitui.Context, _ struct{}, _ struct{
 		Box(BoxProps{Focusable: true, Focus: handle}),
 		buttonHost(ButtonProps{Focus: handle}),
 		inputHost(InputProps{Focus: handle}),
+		editorHost(EditorProps{Focus: handle, TabWidth: 4}),
 		tabsHost(TabsProps{Focus: handle}),
 		listHost(ListProps{Focus: handle}),
 	}
@@ -40,6 +41,8 @@ func hostFocus(data any) omnitui.FocusHandle {
 	case core.ButtonData:
 		return value.Focus.(omnitui.FocusHandle)
 	case core.InputData:
+		return value.Focus.(omnitui.FocusHandle)
+	case core.EditorData:
 		return value.Focus.(omnitui.FocusHandle)
 	case core.TabsData:
 		return value.Focus.(omnitui.FocusHandle)
