@@ -12,7 +12,7 @@ Build a Go TUI framework inspired by the React mental model, in which:
 - every component renders exactly one element (a `Fragment` covers multiple children);
 - state changes trigger a new render;
 - reconciliation preserves or discards state predictably;
-- the public `components` package includes `Row`, `Column`, `Grid`, `Text`, `Input`, `Editor`, `Dropdown`, `Tabs`, and `List` as official builtins;
+- the public `components` package includes `Row`, `Column`, `Grid`, `Text`, `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and `TreeView` as official builtins;
 - the screen is updated by buffer diffing without redrawing the entire terminal.
 
 The first milestone must prove this model with a small API. Animations, concurrent rendering, and a complete imitation of CSS remain outside the MVP; keyed hooks provide lifecycle effects, synchronized refs, viewport reads, and programmatic focus.
@@ -214,9 +214,9 @@ Unicode requires handling visual width, combining characters, and continuation c
 
 ### 8.1 Component catalog
 
-The `omnitui/components` package provides `Row`, `Column`, `Grid`, `Text`, `Input`, `Editor`, `Dropdown`, `Tabs`, and `List` as official builtins. Their contracts, props, behavior, and usage examples are in [COMPONENTS.md](COMPONENTS.md).
+The `omnitui/components` package provides `Row`, `Column`, `Grid`, `Text`, `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and `TreeView` as official builtins. Their contracts, props, behavior, and usage examples are in [COMPONENTS.md](COMPONENTS.md).
 
-`Box` and `Button` remain in the same package as lower-level visual building blocks; `Fragment` and `None` belong to the `omnitui` core. `Box` and `Text` create hosts through the opaque `internal/core` boundary; the other builtins use the same `Component` API available to users. `Input` and `Editor` use unexported internal hosts for cursor, editing, and viewport state. `Grid` uses an unexported host because layout and pointer capture need the actual panel rectangles to resize adjacent tracks in terminal cells. `Dropdown` uses an unexported overlay host that contributes zero height to normal layout, anchors its menu after the trigger, paints it after the regular tree, and gives it hit-testing priority over covered content.
+`Box` and `Button` remain in the same package as lower-level visual building blocks; `Fragment` and `None` belong to the `omnitui` core. `Box` and `Text` create hosts through the opaque `internal/core` boundary; the other builtins use the same `Component` API available to users. `Input` and `Editor` use unexported internal hosts for cursor, editing, and viewport state. `Grid` uses an unexported host because layout, per-item size constraints, and pointer capture need the actual panel rectangles to resize adjacent tracks in terminal cells. `Dropdown` uses an unexported overlay host that contributes zero height to normal layout, anchors its menu after the trigger, paints it after the regular tree, and gives it hit-testing priority over covered content. `TreeView` flattens its expanded node hierarchy into keyed `List` rows, reusing the established selection, focus, and scrolling behavior; an internal line host paints connectors, disclosure indicators, row background, and label style independently.
 
 ### 8.2 Layout engine
 
@@ -356,9 +356,9 @@ A `TestBackend` receives synthetic events and captures frames:
 7. edit and submit a controlled `Input`;
 8. edit, navigate, highlight, click, and scroll a controlled multiline `Editor`;
 9. drag horizontal and vertical `Grid` dividers and verify adjacent sizes and minimums;
-10. navigate `Tabs` and `List` items by keyboard;
-11. click `Button`, `Input`, `Editor`, `Dropdown`, `Tabs`, and `List` with synthetic coordinates;
-12. scroll a `List` by wheel and inspect offset, clipping, and selection;
+10. navigate `Tabs`, `List`, and `TreeView` items by keyboard, including tree expansion and collapse;
+11. click `Button`, `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and `TreeView` with synthetic coordinates;
+12. scroll a `List` and `TreeView` by wheel and inspect offset, clipping, and selection;
 13. cancel and verify backend shutdown.
 
 ### Real terminal
@@ -436,10 +436,11 @@ Deliverables:
 - resizable `Grid` panels, shared borders, pointer capture, and horizontal/vertical layout;
 - controlled `Tabs`, header navigation, clicks, and active panel;
 - controlled `List`, viewport, navigation, clicks, activation, scrollbar, wheel, and automatic scrolling;
+- controlled `TreeView`, hierarchical connectors, expansion, node selection, scrolling, and activation;
 - `ValueChangeEvent`, `SubmitEvent`, and `ActivateEvent`;
 - documentation and composition examples for all builtins.
 
-Completion criterion: `Row`, `Column`, `Grid`, `Text`, `Input`, `Editor`, `Dropdown`, `Tabs`, and `List` are exported by `omnitui/components`, do not create a reverse runtime dependency, and pass the same reconciliation tests as user components.
+Completion criterion: `Row`, `Column`, `Grid`, `Text`, `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and `TreeView` are exported by `omnitui/components`, do not create a reverse runtime dependency, and pass the same reconciliation tests as user components.
 
 ### Phase 6 — hardening before expansion
 
@@ -478,7 +479,7 @@ The MVP is ready when tests and an executable example can demonstrate that:
 7. only buffer differences are written to the terminal;
 8. the terminal is restored on every exit path;
 9. `go test -race ./...` passes;
-10. `Row`, `Column`, `Grid`, `Text`, `Input`, `Editor`, `Dropdown`, `Tabs`, and `List` are exported exclusively by `omnitui/components`;
+10. `Row`, `Column`, `Grid`, `Text`, `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and `TreeView` are exported exclusively by `omnitui/components`;
 11. SGR mouse, hit testing, capture, click press, and wheel work in the real and headless backends;
 12. the `Counter` example API remains small and understandable.
 

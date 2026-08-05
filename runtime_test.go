@@ -279,6 +279,40 @@ func TestBoxLabelContributesToAutoWidth(t *testing.T) {
 	}
 }
 
+func TestTreeLineStylesOnlyTheNodeLabel(t *testing.T) {
+	selectedBackground := core.ANSIColorValue(4)
+	rowStyle := core.Style{Foreground: core.ANSIColorValue(7), Background: selectedBackground}
+	selectedStyle := core.Style{Attributes: core.AttributeUnderline}
+	line := &instance{
+		host: core.Host{
+			Kind: core.HostTreeLine,
+			Data: core.TreeLineData{Prefix: "└─ ▾ ", Label: "Child", LabelStyle: selectedStyle},
+		},
+		rect:  Rect{Width: 11, Height: 1},
+		clip:  Rect{Width: 11, Height: 1},
+		style: rowStyle,
+	}
+	buffer := screen.NewBuffer(11, 1, rowStyle)
+
+	paintTreeLine(buffer, line, line.host.Data.(core.TreeLineData))
+
+	for _, x := range []int{0, 1, 2, 3, 4, 10} {
+		if got := buffer.Cell(x, 0).Style.Attributes; got&core.AttributeUnderline != 0 {
+			t.Fatalf("non-label cell x=%d attributes = %v, want no underline", x, got)
+		}
+	}
+	for x := 5; x < 10; x++ {
+		if got := buffer.Cell(x, 0).Style.Attributes; got&core.AttributeUnderline == 0 {
+			t.Fatalf("label cell x=%d attributes = %v, want underline", x, got)
+		}
+	}
+	for x := 0; x < 11; x++ {
+		if got := buffer.Cell(x, 0).Style.Background; got != selectedBackground {
+			t.Fatalf("cell x=%d background = %+v, want selected background", x, got)
+		}
+	}
+}
+
 func TestTabsHorizontalPaddingIsPaintedAndClickable(t *testing.T) {
 	activeStyle := core.Style{
 		Foreground: core.ANSIColorValue(1),

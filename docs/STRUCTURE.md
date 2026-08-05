@@ -14,7 +14,7 @@ import (
 ```
 
 - `omnitui` contains the runtime, elements, components, state, context, and events.
-- `omnitui/components` exports `Box`, `Row`, `Column`, `Grid`, `Text`, `Button`, `Input`, `Editor`, `Dropdown`, `Tabs`, and `List`.
+- `omnitui/components` exports `Box`, `Row`, `Column`, `Grid`, `Text`, `Button`, `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and `TreeView`.
 
 An application may use a short alias without changing the package’s actual name:
 
@@ -255,14 +255,16 @@ These files remain in the root package and keep their internal symbols unexporte
 | `input.go` | `Input`, `InputProps` |
 | `editor.go` | `Editor`, `EditorProps`, `HighlightSpan`, `SyntaxHighlighter` |
 | `grid.go` | `Grid`, `GridProps` |
+| `grid_item.go` | `GridItem`, `GridItemProps` |
 | `tabs.go` | `Tabs`, `TabsProps`, `TabItem` |
 | `list.go` | `List`, `ListProps`, `ScrollbarMode` |
+| `treeview.go` | `TreeView`, `TreeViewProps`, `TreeNode`, `TreeToggleEvent` |
 
 Signatures, props, and enums are centralized in [API.md](API.md). This section records only the location of each implementation.
 
 ### 5.2 Implementation
 
-- `Row`, `Column`, `Grid`, `Button`, `Input`, `Editor`, `Tabs`, and `List` use the `omnitui.Component` contract.
+- `Row`, `Column`, `Grid`, `Button`, `Input`, `Editor`, `Tabs`, `List`, and `TreeView` use the `omnitui.Component` contract.
 - `Box` and `Text` create hosts through `internal/core`.
 - `Input`, `Editor`, and `Grid` use private hosts in `internal/core` for interaction state that requires arranged geometry.
 - Public props use fundamental `omnitui` types such as `Style`, `Size`, `Spacing`, and events.

@@ -12,7 +12,7 @@ import (
 ```
 
 - `omnitui`: elements, components, state, context, hooks, runtime, events, geometry, and styles.
-- `omnitui/components`: `Box`, `Row`, `Column`, `Grid`, `Text`, `Button`, `Input`, `Editor`, `Dropdown`, `Tabs`, and `List`.
+- `omnitui/components`: `Box`, `Row`, `Column`, `Grid`, `GridItem`, `Text`, `Button`, `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and `TreeView`.
 
 The module path is `github.com/omnitui/omnitui/v2`, as defined in `go.mod`.
 
@@ -176,7 +176,7 @@ func (focus FocusHandle) Blur()
 func (focus FocusHandle) Focused() bool
 ```
 
-Attach a handle to the `Focus` prop of exactly one focusable `Box`, `Button`, `Input`, `Editor`, `Tabs`, or selectable `List`. `Request` and `Blur` enqueue work and may be called from handlers or other goroutines, but not during `Render`. Requests for a disabled, hidden, unmounted, or non-focusable target are ignored. The zero `FocusHandle` is inert.
+Attach a handle to the `Focus` prop of exactly one focusable `Box`, `Button`, `Input`, `Editor`, `Tabs`, selectable `List`, or `TreeView`. `Request` and `Blur` enqueue work and may be called from handlers or other goroutines, but not during `Render`. Requests for a disabled, hidden, unmounted, or non-focusable target are ignored. The zero `FocusHandle` is inert.
 
 ## 6. Runtime — `omnitui`
 
@@ -517,11 +517,21 @@ type GridProps struct {
 }
 
 func Grid(props GridProps, children ...omnitui.Element) omnitui.Element
+
+type GridItemProps struct {
+    InitialSize int
+    MinSize     int
+    MaxSize     int
+}
+
+func GridItem(props GridItemProps, child omnitui.Element) omnitui.Element
 ```
 
 `Grid` places every child inside an automatically clipped, bordered `Box`. Adjacent boxes share one border cell. Every shared, draggable divider is drawn as a double line so it remains visually distinct from non-draggable outer borders. With `OrientationHorizontal`, dragging an internal border with the left mouse button changes the widths of the two adjacent panels; with `OrientationVertical`, it changes their heights. Outer borders and panel content do not start a resize.
 
-Panels start equally sized. Their sizes are interaction state retained by the mounted grid, while an orientation or child-count change starts a new equal distribution. `MinPanelSize` includes the border cells and defaults to 3. An omitted `Border` uses `BorderSingle`; a grid always has borders.
+Wrap a child with `GridItem` to configure its main-axis size in terminal cells. `InitialSize` is used when the grid mounts or its orientation or child count changes. `MinSize` and `MaxSize` constrain layout and dragging. Zero means automatic initial size, the grid's `MinPanelSize`, and no maximum, respectively. A direct child without `GridItem` uses all three defaults.
+
+Sizes include border cells. Automatic items share the space left by explicit initial sizes. When the viewport cannot contain all minimums, the grid temporarily relaxes them to remain inside its rectangle. When every item reaches a finite maximum before filling the grid, the unused cells remain after the final panel. An omitted `Border` uses `BorderSingle`; a grid always has borders.
 
 ### `Text`
 
@@ -725,6 +735,46 @@ func List(props ListProps, items ...omnitui.Element) omnitui.Element
 
 Every direct item must have `WithKey`. `List` is controlled by `SelectedKey`; a left click proposes the item and wheel input moves only the viewport. Detailed scrolling and navigation are in [COMPONENTS.md](COMPONENTS.md#scrolling).
 
+### `TreeView`
+
+```go
+type TreeNode struct {
+    Key      string
+    Label    string
+    Children []TreeNode
+}
+
+type TreeToggleEvent struct {
+    Key      string
+    Expanded bool
+}
+
+type TreeViewProps struct {
+    Nodes         []TreeNode
+    SelectedKey   string
+    ExpandedKeys  []string
+    Height        omnitui.Size
+    Disabled      bool
+    Wrap          bool
+    ScrollPadding int
+    Scrollbar     ScrollbarMode
+    Empty         omnitui.Element
+    Style         omnitui.Style
+    SelectedStyle omnitui.Style
+    Focus         omnitui.FocusHandle
+
+    OnChange   omnitui.EventHandler[omnitui.ValueChangeEvent]
+    OnToggle   omnitui.EventHandler[TreeToggleEvent]
+    OnActivate omnitui.EventHandler[omnitui.ActivateEvent]
+    OnMouse    omnitui.EventHandler[omnitui.MouseEvent]
+    OnWheel    omnitui.EventHandler[omnitui.WheelEvent]
+}
+
+func TreeView(props TreeViewProps) omnitui.Element
+```
+
+`TreeView` renders visible nodes in depth-first order with Unicode branch connectors and `▾`/`▸` expansion indicators. Leaf labels begin immediately after their connector and do not reserve blank indicator cells. Node keys must be non-empty and unique across the complete tree. `SelectedKey` and `ExpandedKeys` are controlled; `OnChange` and `OnToggle` propose their updates. A nil `ExpandedKeys` preserves compatibility by expanding every branch, while a non-nil empty slice collapses all branches. `SelectedStyle.Background` fills the selected row; its foreground and attributes apply only to the node label. Left/right arrows and indicator clicks collapse or expand branches. Keyboard navigation, mouse selection, scrolling, activation, and focus otherwise follow `List`.
+
 ## 10. Events — `omnitui`
 
 ### Handler contract
@@ -760,9 +810,9 @@ For events without propagation, the return value is ignored, but the signature r
 | `FocusEvent` | Element receives focus | New focus | Does not propagate |
 | `BlurEvent` | Element loses focus | Previous focus | Does not propagate |
 | `PressEvent` | Control activation | Pressable `Button` or `Box` | Target through ancestors |
-| `ValueChangeEvent` | `Input`, `Editor`, `Dropdown`, `Tabs`, or `List` proposes a value | Emitting builtin | Does not propagate |
+| `ValueChangeEvent` | `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, or `TreeView` proposes a value | Emitting builtin | Does not propagate |
 | `SubmitEvent` | `Enter` in an `Input` | Focused `Input` | Does not propagate |
-| `ActivateEvent` | `Enter` on a `List` item | Focused `List` | Does not propagate |
+| `ActivateEvent` | `Enter` on a `List` item or tree node | Focused `List` or `TreeView` | Does not propagate |
 | `ResizeEvent` | Terminal dimensions change | Root host | Does not propagate |
 | `MessageEvent` | `App.Dispatch` | Root host | Does not propagate |
 
@@ -1025,6 +1075,7 @@ Direct `Mount`, `Update`, and `Unmount` events are not exposed; lifecycle work b
 | `Dropdown` | `OnChange` |
 | `Tabs` | `OnChange` |
 | `List` | `OnMouse`, `OnWheel`, `OnChange`, `OnActivate` |
+| `TreeView` | `OnMouse`, `OnWheel`, `OnChange`, `OnToggle`, `OnActivate` |
 | `Row`, `Column`, `Grid`, `Text` | No direct handlers |
 
 `Grid` handles divider dragging internally. To add application-defined interaction to `Row` or `Column`, use a `Box` configured as focusable or create a composite component that renders an interactive surface.
@@ -1042,9 +1093,11 @@ The following situations are programming errors and include the component path w
 - props with negative sizes;
 - negative editor `TabWidth` or invalid syntax-highlight range;
 - invalid grid orientation or border, or a grid `MinPanelSize` smaller than 3;
+- negative grid item size, a non-zero grid item size smaller than 3, or contradictory initial/minimum/maximum constraints;
 - empty or duplicate dropdown option key, or an unknown or disabled `SelectedKey`;
 - missing or disabled active tab;
 - `List` item without a key;
+- empty or duplicate tree node key, an unknown tree `SelectedKey`, or an invalid `ExpandedKeys` entry;
 - attribute present simultaneously in `Attributes` and `ClearAttributes`.
 
 I/O, cancellation, and interruption errors are returned by `App.Run`.

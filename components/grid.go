@@ -1,6 +1,8 @@
 package components
 
 import (
+	"fmt"
+
 	"github.com/omnitui/omnitui/v2"
 	"github.com/omnitui/omnitui/v2/internal/core"
 )
@@ -42,12 +44,36 @@ func Grid(props GridProps, children ...omnitui.Element) omnitui.Element {
 		panic("omnitui/components: invalid grid border")
 	}
 	validateStyle(props.Style)
+	for index, child := range children {
+		item, configured := gridItemProps(child)
+		if !configured {
+			continue
+		}
+		minimum := item.MinSize
+		if minimum == 0 {
+			minimum = props.MinPanelSize
+		}
+		if item.InitialSize > 0 && item.InitialSize < minimum {
+			panic(fmt.Sprintf("omnitui/components: grid item %d InitialSize cannot be smaller than its effective minimum", index))
+		}
+		if item.MaxSize > 0 && item.MaxSize < minimum {
+			panic(fmt.Sprintf("omnitui/components: grid item %d MaxSize cannot be smaller than its effective minimum", index))
+		}
+	}
 	return omnitui.Create(gridType, props, children...)
 }
 
 func gridHost(props GridProps, children ...omnitui.Element) omnitui.Element {
 	panels := make([]omnitui.Element, len(children))
+	tracks := make([]core.GridTrackData, len(children))
 	for index, child := range children {
+		if item, ok := gridItemProps(child); ok {
+			tracks[index] = core.GridTrackData{
+				InitialSize: item.InitialSize,
+				MinSize:     item.MinSize,
+				MaxSize:     item.MaxSize,
+			}
+		}
 		panel := Box(BoxProps{
 			Border: props.Border,
 			Clip:   true,
@@ -61,6 +87,6 @@ func gridHost(props GridProps, children ...omnitui.Element) omnitui.Element {
 	return core.NewHost(core.HostGrid, core.GridData{
 		Width: props.Width, Height: props.Height,
 		Orientation: uint8(props.Orientation), MinPanelSize: props.MinPanelSize,
-		Border: uint8(props.Border), Style: props.Style,
+		Border: uint8(props.Border), Style: props.Style, Tracks: tracks,
 	}, panels)
 }

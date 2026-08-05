@@ -12,6 +12,7 @@ const (
 	HostOverlay
 	HostEditor
 	HostGrid
+	HostTreeLine
 )
 
 // Host is the normalized data consumed by reconciliation, layout and paint.
@@ -45,6 +46,9 @@ func cloneHostData(data any) any {
 		return value
 	case TextData:
 		return value
+	case TreeLineData:
+		value.Handlers = cloneHandlers(value.Handlers)
+		return value
 	case ButtonData:
 		value.Handlers = cloneHandlers(value.Handlers)
 		return value
@@ -63,6 +67,7 @@ func cloneHostData(data any) any {
 		value.Handlers = cloneHandlers(value.Handlers)
 		return value
 	case GridData:
+		value.Tracks = append([]GridTrackData(nil), value.Tracks...)
 		return value
 	case OverlayData:
 		return value
@@ -112,6 +117,12 @@ type TextData struct {
 	Truncate uint8
 }
 
+type TreeLineData struct {
+	Prefix, Label string
+	LabelStyle    Style
+	Handlers      Handlers
+}
+
 type ButtonData struct {
 	Label                            string
 	Plain                            bool
@@ -155,6 +166,13 @@ type GridData struct {
 	MinPanelSize  int
 	Border        uint8
 	Style         Style
+	Tracks        []GridTrackData
+}
+
+type GridTrackData struct {
+	InitialSize int
+	MinSize     int
+	MaxSize     int
 }
 
 func cloneHighlights(values [][]HighlightSpan) [][]HighlightSpan {

@@ -1,17 +1,17 @@
 # OmniTUI — builtin components
 
-This document describes the official `Row`, `Column`, `Grid`, `Text`, `Input`, `Editor`, `Dropdown`, `Tabs`, and `List` components exported by the public `omnitui/components` package. Signatures and props are documented in [API.md](API.md); the rendering model is described in [DESIGN.md](DESIGN.md).
+This document describes the official `Row`, `Column`, `Grid`, `Text`, `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and `TreeView` components exported by the public `omnitui/components` package. Signatures and props are documented in [API.md](API.md); the rendering model is described in [DESIGN.md](DESIGN.md).
 
 ## 1. Conventions
 
 - All builtins receive props.
 - `Row`, `Column`, `Grid`, and `List` receive children.
-- `Tabs` receives its panels as `Element` values inside `TabItem`.
-- `Text`, `Input`, and `Editor` are leaves and do not receive children.
-- `Input`, `Editor`, `Dropdown`, `Tabs`, and `List` are controlled: the public value comes from props, and events propose changes to the parent component.
+- `Tabs` receives its panels as `Element` values inside `TabItem`; `TreeView` receives its hierarchy through `TreeNode` values.
+- `Text`, `Input`, `Editor`, and `TreeView` are leaves and do not receive children.
+- `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and `TreeView` are controlled: the public value comes from props, and events propose changes to the parent component.
 - Internal state stores only interaction details such as the cursor, local focus, and scroll offset.
 - Handlers return `omnitui.Propagate` or `omnitui.Consume` according to the event contract.
-- `UseFocus` handles attach through the `Focus` prop of `Box`, `Button`, `Input`, `Editor`, `Tabs`, and `List`; a `Box` must also set `Focusable`, and a `List` must set `Selectable`.
+- `UseFocus` handles attach through the `Focus` prop of `Box`, `Button`, `Input`, `Editor`, `Tabs`, `List`, and `TreeView`; a `Box` must also set `Focusable`, and a `List` must set `Selectable`.
 - `omnitui.Cells(n)` creates a cell-sized `Size`; `omnitui.Fill()` occupies the space available from the parent; `omnitui.All(n)` creates equal spacing on all four sides.
 - Examples use `omnitui` for the core and `components` for builtins; they represent snippets from a `Render` method and omit error handling.
 
@@ -33,6 +33,7 @@ import (
 | `Dropdown` | Select one option from a compact menu | Via `DropdownOption` | Open state and active option |
 | `Tabs` | Navigation between panels | Via `TabItem.Content` | Focused header |
 | `List` | Selectable, scrollable list | Yes | Focus and vertical offset |
+| `TreeView` | Selectable hierarchy | Via `TreeNode.Children` | Focus and vertical offset |
 
 ## 2. `Row`
 
@@ -99,7 +100,9 @@ Signature and props: [API.md — `Grid`](API.md#grid).
 
 `OrientationHorizontal` lays panels out from left to right and lets the user change their widths. `OrientationVertical` lays panels out from top to bottom and changes their heights. A resize starts only when the left mouse button is pressed on a border shared by two children. Moving the pointer changes that adjacent pair while preserving their combined size; releasing the button finishes the interaction. Outer borders and content never start a resize.
 
-Panels begin equally distributed. `MinPanelSize` defaults to 3 cells, including both border cells, and bounds both panels involved in a drag whenever the available space permits it. Mounted grids retain adjusted sizes across ordinary parent renders and fit them back into the available area after a resize. Changing orientation or the number of children resets the equal distribution.
+Use `GridItem` around a child to define `InitialSize`, `MinSize`, and `MaxSize` in cells along the main axis. They control width in `OrientationHorizontal` and height in `OrientationVertical`; every value includes the panel's border cells. Zero keeps the automatic behavior: remaining initial space is shared, `MinPanelSize` supplies the minimum, and the maximum is unlimited. Plain children are equivalent to a `GridItem` with zero values.
+
+Mounted grids retain dragged sizes across ordinary parent renders and fit them to the per-item constraints after a resize. Initial sizes are reapplied only after mounting or when orientation or child count changes. If available space is smaller than the sum of minimums, the minimums are relaxed temporarily. If finite maximums prevent the panels from filling the grid, unused space remains after the final panel.
 
 ```go
 return components.Grid(
@@ -111,9 +114,18 @@ return components.Grid(
         Border:       components.BorderSingle,
         Style:        panelStyle,
     },
-    explorerContent(),
-    editorContent(),
-    previewContent(),
+    components.GridItem(
+        components.GridItemProps{InitialSize: 24, MinSize: 12, MaxSize: 36},
+        components.Text(components.TextProps{Content: "Explorer"}),
+    ),
+    components.GridItem(
+        components.GridItemProps{MinSize: 20},
+        components.Text(components.TextProps{Content: "Editor"}),
+    ),
+    components.GridItem(
+        components.GridItemProps{InitialSize: 20, MinSize: 10, MaxSize: 30},
+        components.Text(components.TextProps{Content: "Preview"}),
+    ),
 )
 ```
 
@@ -398,7 +410,54 @@ func renderProjects(ctx omnitui.Context, state ProjectState) omnitui.Element {
 }
 ```
 
-## 11. Lower-level building blocks
+## 11. `TreeView`
+
+Renders nested `TreeNode` values as a selectable hierarchy. Roots have no artificial indentation; descendants use three-cell levels with `├─`, `└─`, and `│` connectors that preserve their ancestry. Branches show `▾` when expanded and `▸` when collapsed; leaf labels start immediately after their connector without reserving indicator space. Rows are adjacent without gaps, keeping the tree branches visually continuous.
+
+Signature and props: [API.md — `TreeView`](API.md#treeview).
+
+Every node must have a non-empty key that is unique across the entire tree. `SelectedKey` is controlled: keyboard navigation or a left click proposes a new key through `OnChange`, and the parent accepts it by rendering that key back. Expansion is also controlled: `ExpandedKeys` contains open branches and `OnToggle` proposes a key with its next state. Nil expands all branches for compatibility; a non-nil empty slice collapses all of them.
+
+`SelectedStyle.Background` fills the complete selected row. Its foreground and attributes affect only the label, leaving connectors and indicators legible over that background. Left/right arrows collapse or expand the selected branch and move between parent and first child. Clicking `▾` or `▸` toggles that branch. `Enter` still emits `OnActivate`. The component reuses `List` semantics for focus, wrapping, scroll padding, wheel input, scrollbar modes, and programmatic focus.
+
+Visible nodes are rendered in depth-first order. Collapsing a branch removes its descendants from layout and navigation until it is expanded again. Labels occupy one terminal row and use ellipsis when the available width is too small. `Empty` is rendered when `Nodes` is empty.
+
+```go
+return components.TreeView(components.TreeViewProps{
+    Nodes: []components.TreeNode{
+        {
+            Key: "src", Label: "src",
+            Children: []components.TreeNode{
+                {Key: "main", Label: "main.go"},
+                {Key: "config", Label: "config.go"},
+            },
+        },
+        {Key: "readme", Label: "README.md"},
+    },
+    SelectedKey: state.Selected,
+    ExpandedKeys: state.Expanded,
+    Height:      omnitui.Cells(8),
+    Scrollbar:  components.ScrollbarAuto,
+    OnChange: func(event omnitui.ValueChangeEvent) omnitui.EventResult {
+        omnitui.UpdateState(ctx, func(current ScreenState) ScreenState {
+            current.Selected = event.Value
+            return current
+        })
+        return omnitui.Consume
+    },
+    OnToggle: func(event components.TreeToggleEvent) omnitui.EventResult {
+        omnitui.UpdateState(ctx, func(current ScreenState) ScreenState {
+            current.Expanded = updateExpandedKeys(current.Expanded, event.Key, event.Expanded)
+            return current
+        })
+        return omnitui.Consume
+    },
+})
+```
+
+The executable example is in [`examples/treeview`](../examples/treeview/main.go).
+
+## 12. Lower-level building blocks
 
 - `Box`: exported by `components`; a configurable container with direction, size, padding, gap, alignment, border label, style, and clipping.
 - `Button`: exported by `components`; a focusable control with a label and `OnPress`.
@@ -445,7 +504,7 @@ return components.Column(
 
 The handle keeps the same binding while its component instance and hook key are preserved. Calling `Blur` releases focus only when its bound host is currently focused.
 
-## 12. Builtin acceptance criteria
+## 13. Builtin acceptance criteria
 
 1. All are exported by `omnitui/components` and use the core reconciler.
 2. Props and children are never mutated internally.
@@ -459,6 +518,7 @@ The handle keeps the same binding while its component instance and hook key are 
 10. `List` preserves its key anchor and selection during insertion and reordering.
 11. `List` reveals an item after selection changes and preserves its visibility during resize when it was already visible.
 12. `List` correctly clamps its offset with variable-height items, a small viewport, and an empty list.
-13. `Input`, `Editor`, `Dropdown`, `Tabs`, and `List` respond to clicks; `Grid` responds to internal-border drags; `Editor` and `List` respond to wheel input without changing their controlled values.
-14. All events follow the ordering and propagation defined in [API.md](API.md).
-15. All work with the headless backend and have examples compiled as tests.
+13. `TreeView` preserves hierarchy connectors, controls visible branches through `ExpandedKeys`, and proposes selection and expansion without owning either value.
+14. `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and `TreeView` respond to clicks; `Grid` responds to internal-border drags; `Editor`, `List`, and `TreeView` respond to wheel input without changing their controlled values.
+15. All events follow the ordering and propagation defined in [API.md](API.md).
+16. All work with the headless backend and have examples compiled as tests.

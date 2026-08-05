@@ -30,15 +30,19 @@ func (gridExample) InitialState(struct{}) gridState { return gridState{} }
 func (gridExample) Render(ctx omnitui.Context, _ struct{}, state gridState, _ omnitui.Children) omnitui.Element {
 	orientation := components.OrientationHorizontal
 	buttonLabel := "Use vertical orientation"
+	firstSize := components.GridItemProps{InitialSize: 18, MinSize: 8, MaxSize: 28}
+	secondSize := components.GridItemProps{MinSize: 10}
+	thirdSize := components.GridItemProps{InitialSize: 18, MinSize: 8, MaxSize: 24}
 	if state.Vertical {
 		orientation = components.OrientationVertical
 		buttonLabel = "Use horizontal orientation"
+		firstSize = components.GridItemProps{InitialSize: 4, MinSize: 3, MaxSize: 6}
+		secondSize = components.GridItemProps{MinSize: 3}
+		thirdSize = components.GridItemProps{InitialSize: 4, MinSize: 3, MaxSize: 6}
 	}
 	return components.Box(
 		components.BoxProps{
 			Direction: components.Vertical,
-			Padding:   omnitui.All(1),
-			Gap:       1,
 			Border:    components.BorderRounded,
 			Label:     "Resizable grid",
 			Style:     surfaceStyle,
@@ -66,18 +70,22 @@ func (gridExample) Render(ctx omnitui.Context, _ struct{}, state gridState, _ om
 				Border:       components.BorderSingle,
 				Style:        panelStyle,
 			},
-			panel("Explorer", "Project files and folders"),
-			panel("Editor", "The active document"),
-			panel("Preview", "Rendered output"),
+			components.GridItem(firstSize, components.Column(
+				components.ColumnProps{},
+				components.Text(components.TextProps{Content: "Explorer", Style: accentStyle}),
+				components.Text(components.TextProps{Content: "Project files and folders", Wrap: components.WrapWord}),
+			)),
+			components.GridItem(secondSize, components.Column(
+				components.ColumnProps{},
+				components.Text(components.TextProps{Content: "Editor", Style: accentStyle}),
+				components.Text(components.TextProps{Content: "The active document", Wrap: components.WrapWord}),
+			)),
+			components.GridItem(thirdSize, components.Column(
+				components.ColumnProps{},
+				components.Text(components.TextProps{Content: "Preview", Style: accentStyle}),
+				components.Text(components.TextProps{Content: "Rendered output", Wrap: components.WrapWord}),
+			)),
 		),
-	)
-}
-
-func panel(title, description string) omnitui.Element {
-	return components.Column(
-		components.ColumnProps{Padding: omnitui.All(1), Gap: 1},
-		components.Text(components.TextProps{Content: title, Style: accentStyle}),
-		components.Text(components.TextProps{Content: description, Wrap: components.WrapWord}),
 	)
 }
 

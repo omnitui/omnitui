@@ -10,12 +10,14 @@ func measureGrid(grid *instance, data core.GridData, maxWidth, maxHeight int) (i
 	for index, child := range grid.children {
 		childWidth, childHeight := measureNode(child, maxWidth, maxHeight)
 		if data.Orientation == 0 {
+			childWidth = gridMeasuredTrackSize(data, index, childWidth)
 			width += childWidth
 			if index > 0 {
 				width--
 			}
 			height = maxInt(height, childHeight)
 		} else {
+			childHeight = gridMeasuredTrackSize(data, index, childHeight)
 			width = maxInt(width, childWidth)
 			height += childHeight
 			if index > 0 {
@@ -50,14 +52,17 @@ func arrangeGrid(grid *instance, data core.GridData) {
 	if data.Orientation == 1 {
 		extent = grid.rect.Height
 	}
-	if len(grid.gridSizes) != count || grid.gridOrientation != data.Orientation {
-		grid.gridSizes = make([]int, count)
+	total := extent + count - 1
+	reset := len(grid.gridSizes) != count || grid.gridOrientation != data.Orientation
+	if reset {
+		grid.gridSizes = initialGridSizes(data, count, total)
 		grid.gridDragging = false
+	} else {
+		grid.gridSizes = fitGridSizes(grid.gridSizes, data, total)
 	}
 	if grid.gridExtent != extent {
 		grid.gridDragging = false
 	}
-	grid.gridSizes = fitGridSizes(grid.gridSizes, extent+count-1, gridMinimum(data))
 	grid.gridExtent = extent
 	grid.gridOrientation = data.Orientation
 
@@ -78,36 +83,94 @@ func arrangeGrid(grid *instance, data core.GridData) {
 	}
 }
 
-func fitGridSizes(current []int, total, minimum int) []int {
+func gridMeasuredTrackSize(data core.GridData, index, content int) int {
+	minimum, maximum := gridTrackConstraint(data, index)
+	size := content
+	if initial := gridTrack(data, index).InitialSize; initial > 0 {
+		size = initial
+	}
+	size = maxInt(size, minimum)
+	if maximum > 0 {
+		size = minInt(size, maximum)
+	}
+	return size
+}
+
+func initialGridSizes(data core.GridData, count, total int) []int {
+	if count == 0 {
+		return nil
+	}
+	total = maxInt(total, 0)
+	minimums, maximums := gridTrackBounds(data, count, total)
+	result := append([]int(nil), minimums...)
+	automatic := make([]int, 0, count)
+	for index := range result {
+		track := gridTrack(data, index)
+		if track.InitialSize == 0 {
+			automatic = append(automatic, index)
+			continue
+		}
+		result[index] = gridLimit(track.InitialSize, minimums[index], maximums[index])
+	}
+	shrinkGridSizes(result, minimums, total)
+	growGridSizesEvenly(result, maximums, automatic, total)
+	growGridSizesFromEnd(result, maximums, total)
+	return result
+}
+
+func fitGridSizes(current []int, data core.GridData, total int) []int {
 	count := len(current)
 	if count == 0 {
 		return nil
 	}
 	total = maxInt(total, 0)
-	if total < count*minimum {
-		minimum = total / count
-	}
+	minimums, maximums := gridTrackBounds(data, count, total)
 	result := append([]int(nil), current...)
-	if gridSizeSum(result) == 0 {
-		for index := range result {
-			result[index] = total / count
-			if index < total%count {
-				result[index]++
+	for index := range result {
+		result[index] = gridLimit(result[index], minimums[index], maximums[index])
+	}
+	shrinkGridSizes(result, minimums, total)
+	growGridSizesFromEnd(result, maximums, total)
+	return result
+}
+
+func gridTrackBounds(data core.GridData, count, total int) ([]int, []int) {
+	minimums := make([]int, count)
+	for index := range minimums {
+		minimums[index], _ = gridTrackConstraint(data, index)
+	}
+	for gridSizeSum(minimums) > total {
+		largest := -1
+		for index, minimum := range minimums {
+			if minimum > 0 && (largest < 0 || minimum > minimums[largest]) {
+				largest = index
 			}
 		}
-		return result
+		if largest < 0 {
+			break
+		}
+		minimums[largest]--
 	}
-	for index := range result {
-		result[index] = maxInt(result[index], minimum)
+	maximums := make([]int, count)
+	for index := range maximums {
+		_, maximum := gridTrackConstraint(data, index)
+		if maximum == 0 {
+			maximum = total
+		}
+		maximums[index] = maxInt(maximum, minimums[index])
 	}
-	sum := gridSizeSum(result)
+	return minimums, maximums
+}
+
+func shrinkGridSizes(values, minimums []int, total int) {
+	sum := gridSizeSum(values)
 	for sum > total {
 		changed := false
-		for index := len(result) - 1; index >= 0 && sum > total; index-- {
-			if result[index] <= minimum {
+		for index := len(values) - 1; index >= 0 && sum > total; index-- {
+			if values[index] <= minimums[index] {
 				continue
 			}
-			result[index]--
+			values[index]--
 			sum--
 			changed = true
 		}
@@ -115,10 +178,39 @@ func fitGridSizes(current []int, total, minimum int) []int {
 			break
 		}
 	}
-	if sum < total {
-		result[len(result)-1] += total - sum
+}
+
+func growGridSizesEvenly(values, maximums, indexes []int, total int) {
+	sum := gridSizeSum(values)
+	for sum < total {
+		changed := false
+		for _, index := range indexes {
+			if sum >= total {
+				break
+			}
+			if values[index] >= maximums[index] {
+				continue
+			}
+			values[index]++
+			sum++
+			changed = true
+		}
+		if !changed {
+			break
+		}
 	}
-	return result
+}
+
+func growGridSizesFromEnd(values, maximums []int, total int) {
+	remaining := total - gridSizeSum(values)
+	for index := len(values) - 1; index >= 0 && remaining > 0; index-- {
+		growth := minInt(maximums[index]-values[index], remaining)
+		if growth <= 0 {
+			continue
+		}
+		values[index] += growth
+		remaining -= growth
+	}
 }
 
 func gridSizeSum(values []int) int {
@@ -134,6 +226,26 @@ func gridMinimum(data core.GridData) int {
 		return 3
 	}
 	return data.MinPanelSize
+}
+
+func gridTrack(data core.GridData, index int) core.GridTrackData {
+	if index < 0 || index >= len(data.Tracks) {
+		return core.GridTrackData{}
+	}
+	return data.Tracks[index]
+}
+
+func gridTrackConstraint(data core.GridData, index int) (int, int) {
+	track := gridTrack(data, index)
+	minimum := track.MinSize
+	if minimum == 0 {
+		minimum = gridMinimum(data)
+	}
+	maximum := track.MaxSize
+	if maximum > 0 && maximum < minimum {
+		maximum = minimum
+	}
+	return minimum, maximum
 }
 
 func paintGrid(buffer *screen.Buffer, grid *instance, data core.GridData) {
@@ -229,16 +341,19 @@ func (app *App) gridMouse(grid *instance, event MouseEvent) bool {
 }
 
 func (app *App) resizeGrid(grid *instance, data core.GridData, coordinate int) {
-	pair := grid.gridDragFirst + grid.gridDragSecond
-	minimum := gridMinimum(data)
-	if pair < minimum*2 {
-		minimum = pair / 2
-	}
+	minimums, maximums := gridTrackBounds(data, len(grid.gridSizes), gridSizeSum(grid.gridSizes))
 	delta := coordinate - grid.gridDragOrigin
-	delta = gridLimit(delta, minimum-grid.gridDragFirst, grid.gridDragSecond-minimum)
+	index := grid.gridDragIndex
+	lower := minimums[index] - grid.gridDragFirst
+	lower = maxInt(lower, grid.gridDragSecond-maximums[index+1])
+	upper := grid.gridDragSecond - minimums[index+1]
+	upper = minInt(upper, maximums[index]-grid.gridDragFirst)
+	if lower > upper {
+		return
+	}
+	delta = gridLimit(delta, lower, upper)
 	first := grid.gridDragFirst + delta
 	second := grid.gridDragSecond - delta
-	index := grid.gridDragIndex
 	if first == grid.gridSizes[index] && second == grid.gridSizes[index+1] {
 		return
 	}

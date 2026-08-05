@@ -203,6 +203,8 @@ func measureHost(i *instance, maxWidth, maxHeight int) (int, int) {
 			}
 		}
 		return minInt(width, maxWidth), len(lines)
+	case core.TreeLineData:
+		return minInt(uitext.Width(data.Prefix)+uitext.Width(data.Label), maxWidth), 1
 	case core.ButtonData:
 		padding := 0
 		if !data.Plain {
@@ -919,6 +921,8 @@ func paintNode(buffer *screen.Buffer, i *instance) {
 			paintBox(buffer, i, data)
 		case core.TextData:
 			paintText(buffer, i, data.Content, data.Wrap, data.Align, data.MaxLines, data.Truncate, i.style)
+		case core.TreeLineData:
+			paintTreeLine(buffer, i, data)
 		case core.ButtonData:
 			label := data.Label
 			if !data.Plain {
@@ -1037,6 +1041,22 @@ func paintText(buffer *screen.Buffer, i *instance, value string, wrap, align uin
 		}
 		paintGraphemes(buffer, x, i.rect.Y+row, line, style)
 	}
+}
+
+func paintTreeLine(buffer *screen.Buffer, i *instance, data core.TreeLineData) {
+	width := i.rect.Width
+	if width <= 0 {
+		return
+	}
+	prefixWidth := uitext.Width(data.Prefix)
+	if prefixWidth >= width {
+		paintGraphemes(buffer, i.rect.X, i.rect.Y, uitext.Truncate(data.Prefix, width, true), i.style)
+		return
+	}
+	paintGraphemes(buffer, i.rect.X, i.rect.Y, data.Prefix, i.style)
+	labelStyle, _ := core.ResolveStyle(i.style, data.LabelStyle)
+	label := uitext.Truncate(data.Label, width-prefixWidth, true)
+	paintGraphemes(buffer, i.rect.X+prefixWidth, i.rect.Y, label, labelStyle)
 }
 
 func paintInput(buffer *screen.Buffer, i *instance, data core.InputData) {

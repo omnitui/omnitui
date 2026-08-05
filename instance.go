@@ -121,6 +121,8 @@ func (i *instance) handlerValue(name string) any {
 		return data.Handlers[name]
 	case core.ListData:
 		return data.Handlers[name]
+	case core.TreeLineData:
+		return data.Handlers[name]
 	default:
 		return nil
 	}

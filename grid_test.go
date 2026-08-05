@@ -98,6 +98,84 @@ func TestGridDragLeavesNonAdjacentPanelsUnchanged(t *testing.T) {
 	}
 }
 
+func TestGridUsesPerPanelInitialSizesOnBothAxes(t *testing.T) {
+	tracks := []core.GridTrackData{
+		{InitialSize: 10, MinSize: 8, MaxSize: 12},
+		{MinSize: 5, MaxSize: 13},
+	}
+	horizontal := newGridTestAppWithTracks(t, 0, 20, 5, 3, tracks)
+	if got := horizontal.rootInstance.gridSizes; got[0] != 10 || got[1] != 11 {
+		t.Fatalf("horizontal initial sizes = %v, want [10 11]", got)
+	}
+	assertRect(t, horizontal.rootInstance.children[0].rect, Rect{Width: 10, Height: 5})
+	assertRect(t, horizontal.rootInstance.children[1].rect, Rect{X: 9, Width: 11, Height: 5})
+
+	vertical := newGridTestAppWithTracks(t, 1, 5, 20, 3, tracks)
+	if got := vertical.rootInstance.gridSizes; got[0] != 10 || got[1] != 11 {
+		t.Fatalf("vertical initial sizes = %v, want [10 11]", got)
+	}
+	assertRect(t, vertical.rootInstance.children[0].rect, Rect{Width: 5, Height: 10})
+	assertRect(t, vertical.rootInstance.children[1].rect, Rect{Y: 9, Width: 5, Height: 11})
+}
+
+func TestGridInitialSizeControlsAutomaticMeasurement(t *testing.T) {
+	data := core.GridData{
+		MinPanelSize: 3,
+		Tracks: []core.GridTrackData{
+			{InitialSize: 8, MinSize: 5, MaxSize: 10},
+		},
+	}
+	if got := gridMeasuredTrackSize(data, 0, 20); got != 8 {
+		t.Fatalf("measured explicit track = %d, want 8", got)
+	}
+	if got := gridMeasuredTrackSize(data, 1, 20); got != 20 {
+		t.Fatalf("measured automatic track = %d, want 20", got)
+	}
+}
+
+func TestGridDragHonorsPerPanelMinimumsAndMaximums(t *testing.T) {
+	tracks := []core.GridTrackData{
+		{InitialSize: 10, MinSize: 8, MaxSize: 12},
+		{MinSize: 5, MaxSize: 13},
+	}
+	app := newGridTestAppWithTracks(t, 0, 20, 5, 3, tracks)
+	grid := app.rootInstance
+
+	app.dispatchMouse(MouseEvent{Action: MouseDown, Button: MouseButtonLeft, X: 9, Y: 2})
+	app.dispatchMouse(MouseEvent{Action: MouseUp, Button: MouseButtonLeft, X: 17, Y: 2})
+	if err := app.cycle(); err != nil {
+		t.Fatal(err)
+	}
+	if got := grid.gridSizes; got[0] != 12 || got[1] != 9 {
+		t.Fatalf("sizes after maximum drag = %v, want [12 9]", got)
+	}
+
+	app.dispatchMouse(MouseEvent{Action: MouseDown, Button: MouseButtonLeft, X: 11, Y: 2})
+	app.dispatchMouse(MouseEvent{Action: MouseUp, Button: MouseButtonLeft, X: 0, Y: 2})
+	if err := app.cycle(); err != nil {
+		t.Fatal(err)
+	}
+	if got := grid.gridSizes; got[0] != 8 || got[1] != 13 {
+		t.Fatalf("sizes after minimum drag = %v, want [8 13]", got)
+	}
+}
+
+func TestGridFitsExistingSizesWithinPerPanelBounds(t *testing.T) {
+	data := core.GridData{
+		MinPanelSize: 3,
+		Tracks: []core.GridTrackData{
+			{InitialSize: 10, MinSize: 8, MaxSize: 12},
+			{MinSize: 5, MaxSize: 13},
+		},
+	}
+	if got := fitGridSizes([]int{10, 11}, data, 16); got[0] != 8 || got[1] != 8 {
+		t.Fatalf("shrunk sizes = %v, want [8 8]", got)
+	}
+	if got := fitGridSizes([]int{8, 8}, data, 31); got[0] != 12 || got[1] != 13 {
+		t.Fatalf("grown capped sizes = %v, want [12 13]", got)
+	}
+}
+
 func newGridTestApp(t *testing.T, orientation uint8, width, height, minimum int, panelCount ...int) *App {
 	t.Helper()
 	panel := func(label string) Element {
@@ -116,6 +194,30 @@ func newGridTestApp(t *testing.T, orientation uint8, width, height, minimum int,
 	root := core.NewHost(core.HostGrid, core.GridData{
 		Width: core.CellsSize(width), Height: core.CellsSize(height),
 		Orientation: orientation, MinPanelSize: minimum, Border: 1,
+	}, panels)
+	app := New(root, Options{})
+	app.width, app.height = width, height
+	if err := app.render(); err != nil {
+		t.Fatal(err)
+	}
+	return app
+}
+
+func newGridTestAppWithTracks(t *testing.T, orientation uint8, width, height, minimum int, tracks []core.GridTrackData) *App {
+	t.Helper()
+	panel := func() Element {
+		return core.NewHost(core.HostBox, core.BoxData{Border: 1, Clip: true}, []Element{
+			core.NewHost(core.HostText, core.TextData{Content: "panel"}, nil),
+		})
+	}
+	panels := make([]Element, len(tracks))
+	for index := range panels {
+		panels[index] = panel()
+	}
+	root := core.NewHost(core.HostGrid, core.GridData{
+		Width: core.CellsSize(width), Height: core.CellsSize(height),
+		Orientation: orientation, MinPanelSize: minimum, Border: 1,
+		Tracks: tracks,
 	}, panels)
 	app := New(root, Options{})
 	app.width, app.height = width, height

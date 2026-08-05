@@ -52,19 +52,22 @@ Start with one structural container and divide the screen into named regions:
 - Use `Button` for explicit actions.
 - Use `Tabs` for mutually exclusive panels.
 - Use `List` for keyed selection and scrolling.
+- Use `TreeView` for controlled selection and expansion in a hierarchy of keyed nodes.
 
-Keep a predictable hierarchy: outer surface → header → navigation/content → controls → status. Extract repeated regions into helper functions that accept state and context.
+Keep a predictable hierarchy: outer surface → header → navigation/content → controls → status. Keep the complete element tree inline in `Render`; do not move regions into helper functions that return `omnitui.Element`. If a region needs its own rendering boundary, promote it to a real named component with explicit props.
+
+Define exactly one OmniTUI component per `.go` source file, including its component type and `omnitui.Define` value. Put every additional component in its own file. Non-rendering data, validation, and formatting helpers may remain beside the component they support.
 
 ### 4. Make interactive components controlled
 
-`Input`, `Editor`, `Dropdown`, `Tabs`, and `List` receive their public value from props. Their events propose a new value; accept it by updating the parent state.
+`Input`, `Editor`, `Dropdown`, `Tabs`, and `List` receive their public value from props. `TreeView` receives both `SelectedKey` and `ExpandedKeys`; accept proposals from `OnChange` and `OnToggle` by updating the parent state.
 
 ```go
 components.Tabs(components.TabsProps{
 	ActiveKey: state.ActiveTab,
 	Items: []components.TabItem{
-		{Key: "overview", Label: "Overview", Content: overviewPanel()},
-		{Key: "logs", Label: "Logs", Content: logsPanel()},
+		{Key: "overview", Label: "Overview", Content: components.Text(components.TextProps{Content: "Overview content"})},
+		{Key: "logs", Label: "Logs", Content: components.Text(components.TextProps{Content: "Log content"})},
 	},
 	OnChange: func(event omnitui.ValueChangeEvent) omnitui.EventResult {
 		omnitui.UpdateState(ctx, func(current screenState) screenState {
@@ -76,7 +79,7 @@ components.Tabs(components.TabsProps{
 })
 ```
 
-Apply the same pattern to `Input.OnChange`, `Input.OnSubmit`, `Editor.OnChange`, `Dropdown.OnChange`, `List.OnChange`, and `List.OnActivate`. Give every dropdown option, tab, and direct `List` child a unique, stable key.
+Apply the same pattern to `Input.OnChange`, `Input.OnSubmit`, `Editor.OnChange`, `Dropdown.OnChange`, `List.OnChange`, `List.OnActivate`, `TreeView.OnChange`, `TreeView.OnToggle`, and `TreeView.OnActivate`. Give every dropdown option, tab, direct `List` child, and tree node a unique, stable key.
 
 ### 5. Add visual hierarchy
 
@@ -146,8 +149,9 @@ If the interface is interactive, exercise keyboard traversal, Enter/Space activa
 | Action | `Button` | Handle `OnPress`; define both `Style` and `FocusStyle`. |
 | Panel navigation | `Tabs` | Use unique keys, controlled `ActiveKey`, and an `OnChange` handler. |
 | Selectable viewport | `List` | Key every item, control `SelectedKey`, and use `OnActivate` for Enter. |
+| Hierarchical selection | `TreeView` | Use globally unique node keys; control `SelectedKey` through `OnChange` and `ExpandedKeys` through `OnToggle`. |
 
-`Box` and `Button` are lower-level building blocks; `Row`, `Column`, `Grid`, `Text`, `Input`, `Editor`, `Dropdown`, `Tabs`, and `List` are the usual application-level components.
+`Box` and `Button` are lower-level building blocks; `Row`, `Column`, `Grid`, `Text`, `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and `TreeView` are the usual application-level components.
 
 ## Interaction patterns
 
@@ -200,6 +204,13 @@ If the interface is interactive, exercise keyboard traversal, Enter/Space activa
 - Keep `OnChange` responsible for selection and `OnActivate` responsible for opening or confirming an item.
 - Use `ScrollPadding` to keep keyboard selection visible and `ScrollbarAuto` or `ScrollbarAlways` when the viewport benefits from an indicator.
 
+### Tree views
+
+- Keep every node key non-empty and unique across the complete tree.
+- Keep `SelectedKey` in parent state and accept proposals through `OnChange`.
+- Remember that every node stays visible; do not imply expand/collapse behavior that the API does not provide.
+- Use a finite `Height` and a scrollbar when the flattened hierarchy can exceed the viewport.
+
 ### Buttons and focus
 
 - Make the label describe the result: `Save`, `Open`, `Retry`, or `Delete`.
@@ -223,7 +234,7 @@ Use attributes intentionally: `Bold`, `Dim`, `Italic`, `Underline`, `Blink`, `Re
 Use this shape as a starting point and replace the regions with product-specific content:
 
 ```go
-func (screen) Render(ctx omnitui.Context, _ string, state screenState, _ omnitui.Children) omnitui.Element {
+func (screen) Render(_ omnitui.Context, _ string, state screenState, _ omnitui.Children) omnitui.Element {
 	return components.Box(
 		components.BoxProps{
 			Direction: components.Vertical,
@@ -232,22 +243,23 @@ func (screen) Render(ctx omnitui.Context, _ string, state screenState, _ omnitui
 			Style:     surfaceStyle,
 		},
 		components.Text(components.TextProps{Content: "Application title", Style: accentStyle}),
-		navigation(ctx, state),
-		content(ctx, state),
-		footer(state),
+		components.Text(components.TextProps{Content: "Main content"}),
+		components.Text(components.TextProps{Content: state.Notice, Style: mutedStyle}),
 	)
 }
 ```
 
-Keep helper functions pure with respect to rendering: accept `ctx` and state, return elements, and perform mutations only inside event handlers.
+Use helpers for data transformation, validation, and formatting, not for returning fragments of the render tree.
 
 ## Common failure modes
 
 - Do not store mutable state in a component value passed to `omnitui.Define`; mounted occurrences must own independent state.
-- Do not pass children to `Text`, `Input`, or `Editor`; they are leaves.
+- Do not pass children to `Text`, `Input`, `Editor`, or `TreeView`; they are leaves.
 - Do not omit keys from `List` items or reuse keys for unrelated items.
-- Do not make `Dropdown`, `Tabs`, or `List` appear interactive without wiring the corresponding controlled state handler.
+- Do not make `Dropdown`, `Tabs`, `List`, or `TreeView` appear interactive without wiring the corresponding controlled state handlers, including `TreeView.OnToggle` when branches can collapse.
 - Do not update state during `Render`.
+- Do not split a component's element tree across rendering helper functions; create a real child component in its own file only when the region needs an independent component boundary.
+- Do not declare two OmniTUI components in the same `.go` source file.
 - Do not use negative dimensions, gaps, padding, or `MaxLines`.
 - Do not add `Gap` or `Padding` by habit, copy it into every nested container, or use both to create the same visual separation.
 - Do not create a giant `Row` of unconstrained content that cannot fit a normal terminal.
@@ -259,7 +271,8 @@ Keep helper functions pure with respect to rendering: accept `ctx` and state, re
 - [ ] Read the repository API and component documentation.
 - [ ] Define explicit component state and stable keys.
 - [ ] Build a clear `Box`/`Row`/`Column` hierarchy.
-- [ ] Keep `Input`, `Editor`, `Dropdown`, `Tabs`, and `List` controlled by parent state.
+- [ ] Keep each render tree inline and each component in its own source file.
+- [ ] Keep `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and both TreeView selection and expansion controlled by parent state.
 - [ ] Add visible focus and selection styles.
 - [ ] Handle keyboard traversal and activation.
 - [ ] Exercise mouse and wheel behavior where supported.
