@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0](https://github.com/omnitui/omnitui/compare/v2.2.0...v2.3.0) (2026-08-05)
+
+
+### Features
+
+* add treeview and grid sizing props ([46b5d1c](https://github.com/omnitui/omnitui/commit/46b5d1caf0e5be7a0d1088e6b1e82fcf05f31f8c))
+
 ## [2.2.0](https://github.com/omnitui/omnitui/compare/v2.1.1...v2.2.0) (2026-08-04)
 
 
