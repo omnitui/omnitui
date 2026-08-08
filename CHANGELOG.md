@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/omnitui/omnitui/compare/v2.3.0...v2.3.1) (2026-08-08)
+
+
+### Bug Fixes
+
+* grid sizing ([684c282](https://github.com/omnitui/omnitui/commit/684c2824c00e03cedbd7db258e94ffce4622bc7c))
+
 ## [2.3.0](https://github.com/omnitui/omnitui/compare/v2.2.0...v2.3.0) (2026-08-05)
 
 
