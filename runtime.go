@@ -590,7 +590,10 @@ func flexGrowOf(i *instance) int {
 	}
 	switch i.kind() {
 	case core.KindHost:
-		if data, ok := i.host.Data.(core.BoxData); ok {
+		switch data := i.host.Data.(type) {
+		case core.BoxData:
+			return data.FlexGrow
+		case core.GridData:
 			return data.FlexGrow
 		}
 	case core.KindComponent, core.KindProvider, core.KindFragment:

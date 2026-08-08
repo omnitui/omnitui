@@ -162,6 +162,7 @@ type EditorData struct {
 
 type GridData struct {
 	Width, Height Size
+	FlexGrow      int
 	Orientation   uint8
 	MinPanelSize  int
 	Border        uint8

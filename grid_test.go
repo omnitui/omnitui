@@ -49,6 +49,34 @@ func TestGridArrangesVerticalPanelsWithSharedBorder(t *testing.T) {
 	}
 }
 
+func TestGridFlexGrowFillsParentAndStretchesPanels(t *testing.T) {
+	panel := core.NewHost(core.HostBox, core.BoxData{}, []core.Element{
+		core.NewHost(core.HostText, core.TextData{Content: "panel"}, nil),
+	})
+	grid := core.NewHost(core.HostGrid, core.GridData{
+		FlexGrow:     1,
+		Orientation:  0,
+		MinPanelSize: 3,
+		Border:       1,
+	}, []core.Element{panel})
+	root := core.NewHost(core.HostBox, core.BoxData{
+		Direction: 1,
+		Align:     3,
+	}, []core.Element{grid})
+	app := New(root, Options{})
+	app.width, app.height = 20, 8
+	if err := app.render(); err != nil {
+		t.Fatal(err)
+	}
+	gridInstance := app.rootInstance.children[0]
+	if gridInstance.rect.Width != 20 || gridInstance.rect.Height != 8 {
+		t.Fatalf("grid rect = %#v, want 20x8", gridInstance.rect)
+	}
+	if got := gridInstance.children[0].rect.Height; got != 8 {
+		t.Fatalf("panel height = %d, want 8", got)
+	}
+}
+
 func TestGridDragResizesOnlyInternalBorders(t *testing.T) {
 	app := newGridTestApp(t, 0, 11, 5, 3)
 	grid := app.rootInstance

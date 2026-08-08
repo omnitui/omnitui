@@ -9,6 +9,7 @@ import (
 
 type GridProps struct {
 	Width, Height omnitui.Size
+	FlexGrow      int
 	Orientation   Orientation
 	MinPanelSize  int
 	Border        BorderStyle
@@ -30,6 +31,9 @@ func Grid(props GridProps, children ...omnitui.Element) omnitui.Element {
 	}
 	if props.MinPanelSize < 0 {
 		panic("omnitui/components: grid MinPanelSize cannot be negative")
+	}
+	if props.FlexGrow < 0 {
+		panic("omnitui/components: grid FlexGrow cannot be negative")
 	}
 	if props.MinPanelSize == 0 {
 		props.MinPanelSize = 3
@@ -75,6 +79,7 @@ func gridHost(props GridProps, children ...omnitui.Element) omnitui.Element {
 			}
 		}
 		panel := Box(BoxProps{
+			Align:  AlignStretch,
 			Border: props.Border,
 			Clip:   true,
 			Style:  props.Style,
@@ -85,7 +90,7 @@ func gridHost(props GridProps, children ...omnitui.Element) omnitui.Element {
 		panels[index] = panel
 	}
 	return core.NewHost(core.HostGrid, core.GridData{
-		Width: props.Width, Height: props.Height,
+		Width: props.Width, Height: props.Height, FlexGrow: props.FlexGrow,
 		Orientation: uint8(props.Orientation), MinPanelSize: props.MinPanelSize,
 		Border: uint8(props.Border), Style: props.Style, Tracks: tracks,
 	}, panels)

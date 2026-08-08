@@ -26,8 +26,8 @@ func TestGridWrapsChildrenInBorderedPanels(t *testing.T) {
 		t.Fatal("grid child is not a host panel")
 	}
 	data := panel.Data.(core.BoxData)
-	if data.Border != uint8(BorderHeavy) || !data.Clip {
-		t.Fatalf("panel border=%d clip=%v", data.Border, data.Clip)
+	if data.Border != uint8(BorderHeavy) || !data.Clip || data.Align != uint8(AlignStretch) {
+		t.Fatalf("panel border=%d clip=%v align=%d", data.Border, data.Clip, data.Align)
 	}
 	if core.KeyOf(host.Children[0]) != "first" {
 		t.Fatalf("panel key = %q, want first", core.KeyOf(host.Children[0]))
@@ -50,6 +50,19 @@ func TestGridForwardsPerItemSizes(t *testing.T) {
 	if core.KeyOf(host.Children[0]) != "first" {
 		t.Fatalf("panel key = %q, want first", core.KeyOf(host.Children[0]))
 	}
+}
+
+func TestGridForwardsFlexGrow(t *testing.T) {
+	element := gridHost(GridProps{FlexGrow: 1, MinPanelSize: 3, Border: BorderSingle}, omnitui.None())
+	host, ok := core.HostOf(element)
+	if !ok {
+		t.Fatal("Grid did not create a host")
+	}
+	data := host.Data.(core.GridData)
+	if data.FlexGrow != 1 {
+		t.Fatalf("grid flex grow = %d, want 1", data.FlexGrow)
+	}
+	mustPanic(t, func() { Grid(GridProps{FlexGrow: -1}) })
 }
 
 func TestGridItemValidation(t *testing.T) {
