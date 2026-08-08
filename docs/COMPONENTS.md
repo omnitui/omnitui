@@ -98,6 +98,8 @@ Arranges children as adjacent bordered panels. Each child is automatically wrapp
 
 Signature and props: [API.md — `Grid`](API.md#grid).
 
+Set `FlexGrow: 1` when the grid should consume the remaining space in its parent.
+
 `OrientationHorizontal` lays panels out from left to right and lets the user change their widths. `OrientationVertical` lays panels out from top to bottom and changes their heights. A resize starts only when the left mouse button is pressed on a border shared by two children. Moving the pointer changes that adjacent pair while preserving their combined size; releasing the button finishes the interaction. Outer borders and content never start a resize.
 
 Use `GridItem` around a child to define `InitialSize`, `MinSize`, and `MaxSize` in cells along the main axis. They control width in `OrientationHorizontal` and height in `OrientationVertical`; every value includes the panel's border cells. Zero keeps the automatic behavior: remaining initial space is shared, `MinPanelSize` supplies the minimum, and the maximum is unlimited. Plain children are equivalent to a `GridItem` with zero values.
@@ -282,6 +284,8 @@ Displays a tab bar and the active panel. Selection is controlled by `ActiveKey`.
 
 Signature and props: [API.md — `Tabs`](API.md#tabs).
 
+Set `FlexGrow: 1` when the tab content should consume the remaining space in its parent.
+
 Keys must be unique and stable. `ActiveKey == ""` displays the first enabled tab. A missing or disabled key is a props error. Arrow keys move focus; `Enter`, `Space`, or a left click on a header proposes a new key. Every header includes one terminal column of horizontal padding on both sides, and that padded area is part of the header hit target.
 
 ### Example
@@ -326,6 +330,8 @@ func renderTabs(ctx omnitui.Context, state ScreenState) omnitui.Element {
 Displays children as selectable items in a vertical viewport. Every direct child must have `WithKey`; the key identifies selection and preserves identity during reordering.
 
 Signature and props: [API.md — `List`](API.md#list).
+
+Set `FlexGrow: 1` when the list should fill the remaining space in its parent; omit `Height` in that case.
 
 Arrow keys, Home, End, PageUp, and PageDown propose a new selection. `Enter` emits `ActivateEvent`. Internal state maintains focus and scroll offset; `SelectedKey` remains controlled by the parent. `Empty` is rendered when there are no items.
 

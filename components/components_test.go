@@ -75,6 +75,25 @@ func TestTabsAndListValidateKeys(t *testing.T) {
 	Tabs(TabsProps{ActiveKey: "ok", Items: []TabItem{{Key: "ok"}, {Key: "disabled", Disabled: true}}})
 }
 
+func TestTabsAndListForwardFlexGrow(t *testing.T) {
+	tabs, ok := core.HostOf(tabsHost(TabsProps{FlexGrow: 1}))
+	if !ok {
+		t.Fatal("Tabs did not create a host")
+	}
+	if got := tabs.Data.(core.TabsData).FlexGrow; got != 1 {
+		t.Fatalf("tabs flex grow = %d, want 1", got)
+	}
+	list, ok := core.HostOf(listHost(ListProps{FlexGrow: 1}))
+	if !ok {
+		t.Fatal("List did not create a host")
+	}
+	if got := list.Data.(core.ListData).FlexGrow; got != 1 {
+		t.Fatalf("list flex grow = %d, want 1", got)
+	}
+	mustPanic(t, func() { Tabs(TabsProps{FlexGrow: -1}) })
+	mustPanic(t, func() { List(ListProps{FlexGrow: -1}) })
+}
+
 func TestStyleConflictIsRejected(t *testing.T) {
 	mustPanic(t, func() { Text(TextProps{Style: omnitui.Style{Attributes: omnitui.Bold, ClearAttributes: omnitui.Bold}}) })
 }

@@ -23,6 +23,7 @@ type TabItem struct {
 type TabsProps struct {
 	Items       []TabItem
 	ActiveKey   string
+	FlexGrow    int
 	Orientation Orientation
 	Style       omnitui.Style
 	ActiveStyle omnitui.Style
@@ -40,6 +41,9 @@ func (tabsComponent) Render(_ omnitui.Context, props TabsProps, _ struct{}, _ om
 var tabsType = omnitui.Define[TabsProps, struct{}]("Tabs", tabsComponent{})
 
 func Tabs(props TabsProps) omnitui.Element {
+	if props.FlexGrow < 0 {
+		panic("omnitui/components: tabs FlexGrow cannot be negative")
+	}
 	props.Items = append([]TabItem(nil), props.Items...)
 	validateStyle(props.Style)
 	validateStyle(props.ActiveStyle)
@@ -81,5 +85,5 @@ func tabsHost(props TabsProps) omnitui.Element {
 	for index, item := range props.Items {
 		items[index] = core.TabData{Key: item.Key, Label: item.Label, Content: item.Content, Disabled: item.Disabled}
 	}
-	return core.NewHost(core.HostTabs, core.TabsData{Items: items, ActiveKey: props.ActiveKey, Orientation: uint8(props.Orientation), Style: props.Style, ActiveStyle: props.ActiveStyle, Focus: props.Focus, Handlers: handlers(map[string]any{"change": props.OnChange})}, nil)
+	return core.NewHost(core.HostTabs, core.TabsData{Items: items, ActiveKey: props.ActiveKey, FlexGrow: props.FlexGrow, Orientation: uint8(props.Orientation), Style: props.Style, ActiveStyle: props.ActiveStyle, Focus: props.Focus, Handlers: handlers(map[string]any{"change": props.OnChange})}, nil)
 }

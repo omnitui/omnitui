@@ -197,6 +197,7 @@ type TabData struct {
 type TabsData struct {
 	Items              []TabData
 	ActiveKey          string
+	FlexGrow           int
 	Orientation        uint8
 	Style, ActiveStyle Style
 	Focus              any
@@ -207,6 +208,7 @@ type ListData struct {
 	SelectedKey          string
 	Selectable           bool
 	Height               Size
+	FlexGrow             int
 	Gap                  int
 	Disabled, Wrap       bool
 	ScrollPadding        int

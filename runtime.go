@@ -595,6 +595,10 @@ func flexGrowOf(i *instance) int {
 			return data.FlexGrow
 		case core.GridData:
 			return data.FlexGrow
+		case core.TabsData:
+			return data.FlexGrow
+		case core.ListData:
+			return data.FlexGrow
 		}
 	case core.KindComponent, core.KindProvider, core.KindFragment:
 		if len(i.children) == 1 {

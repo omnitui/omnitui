@@ -19,6 +19,7 @@ type ListProps struct {
 	SelectedKey   string
 	Selectable    bool
 	Height        omnitui.Size
+	FlexGrow      int
 	Gap           int
 	Disabled      bool
 	Wrap          bool
@@ -44,6 +45,9 @@ func (listComponent) Render(_ omnitui.Context, props ListProps, _ struct{}, chil
 var listType = omnitui.Define[ListProps, struct{}]("List", listComponent{})
 
 func List(props ListProps, items ...omnitui.Element) omnitui.Element {
+	if props.FlexGrow < 0 {
+		panic("omnitui/components: list FlexGrow cannot be negative")
+	}
 	if props.Gap < 0 || props.ScrollPadding < 0 {
 		panic("omnitui/components: list spacing cannot be negative")
 	}
@@ -67,5 +71,5 @@ func List(props ListProps, items ...omnitui.Element) omnitui.Element {
 }
 
 func listHost(props ListProps, items ...omnitui.Element) omnitui.Element {
-	return core.NewHost(core.HostList, core.ListData{SelectedKey: props.SelectedKey, Selectable: props.Selectable, Height: props.Height, Gap: props.Gap, Disabled: props.Disabled, Wrap: props.Wrap, ScrollPadding: props.ScrollPadding, Scrollbar: uint8(props.Scrollbar), Empty: props.Empty, Style: props.Style, SelectedStyle: props.SelectedStyle, Focus: props.Focus, Handlers: handlers(map[string]any{"change": props.OnChange, "activate": props.OnActivate, "mouse": props.OnMouse, "wheel": props.OnWheel})}, items)
+	return core.NewHost(core.HostList, core.ListData{SelectedKey: props.SelectedKey, Selectable: props.Selectable, Height: props.Height, FlexGrow: props.FlexGrow, Gap: props.Gap, Disabled: props.Disabled, Wrap: props.Wrap, ScrollPadding: props.ScrollPadding, Scrollbar: uint8(props.Scrollbar), Empty: props.Empty, Style: props.Style, SelectedStyle: props.SelectedStyle, Focus: props.Focus, Handlers: handlers(map[string]any{"change": props.OnChange, "activate": props.OnActivate, "mouse": props.OnMouse, "wheel": props.OnWheel})}, items)
 }

@@ -510,6 +510,7 @@ func Column(props ColumnProps, children ...omnitui.Element) omnitui.Element
 ```go
 type GridProps struct {
     Width, Height omnitui.Size
+    FlexGrow      int
     Orientation   Orientation
     MinPanelSize  int
     Border        BorderStyle
@@ -696,6 +697,7 @@ type TabItem struct {
 type TabsProps struct {
     Items       []TabItem
     ActiveKey   string
+    FlexGrow    int
     Orientation Orientation
     Style       omnitui.Style
     ActiveStyle omnitui.Style
@@ -714,6 +716,7 @@ Keys must be unique. `ActiveKey == ""` uses the first enabled tab; a missing or 
 type ListProps struct {
     SelectedKey   string
     Height        omnitui.Size
+    FlexGrow      int
     Gap           int
     Disabled      bool
     Wrap          bool
