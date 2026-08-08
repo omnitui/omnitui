@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0](https://github.com/omnitui/omnitui/compare/v2.3.1...v2.4.0) (2026-08-08)
+
+
+### Features
+
+* add FlexGrow support to Tabs and List components, update tests and documentation ([1e8213f](https://github.com/omnitui/omnitui/commit/1e8213f836a881242a2df3d2ca96a2f252fbd9d7))
+
 ## [2.3.1](https://github.com/omnitui/omnitui/compare/v2.3.0...v2.3.1) (2026-08-08)
 
 
