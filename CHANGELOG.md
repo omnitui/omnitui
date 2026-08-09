@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.1](https://github.com/omnitui/omnitui/compare/v2.4.0...v2.4.1) (2026-08-09)
+
+
+### Bug Fixes
+
+* BorderNone support in Grid component, update tests and documentation ([d70b111](https://github.com/omnitui/omnitui/commit/d70b111d71137eb7068ed39c82b7cada115055d4))
+
 ## [2.4.0](https://github.com/omnitui/omnitui/compare/v2.3.1...v2.4.0) (2026-08-08)
 
 
