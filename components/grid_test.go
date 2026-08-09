@@ -65,6 +65,24 @@ func TestGridForwardsFlexGrow(t *testing.T) {
 	mustPanic(t, func() { Grid(GridProps{FlexGrow: -1}) })
 }
 
+func TestGridHonorsBorderNone(t *testing.T) {
+	element := gridHost(GridProps{Border: BorderNone}, omnitui.None())
+	host, ok := core.HostOf(element)
+	if !ok {
+		t.Fatal("Grid did not create a host")
+	}
+	if got := host.Data.(core.GridData).Border; got != uint8(BorderNone) {
+		t.Fatalf("grid border = %d, want none", got)
+	}
+	panel, ok := core.HostOf(host.Children[0])
+	if !ok {
+		t.Fatal("grid child is not a host panel")
+	}
+	if got := panel.Data.(core.BoxData).Border; got != uint8(BorderNone) {
+		t.Fatalf("panel border = %d, want none", got)
+	}
+}
+
 func TestGridItemValidation(t *testing.T) {
 	invalid := []GridItemProps{
 		{InitialSize: -1},
@@ -90,7 +108,7 @@ func TestGridItemValidation(t *testing.T) {
 func TestGridDefaultsAndValidation(t *testing.T) {
 	element := Grid(GridProps{}, omnitui.None())
 	props := core.PropsOf(element).(GridProps)
-	if props.MinPanelSize != 3 || props.Border != BorderSingle {
+	if props.MinPanelSize != 3 || props.Border != BorderNone {
 		t.Fatalf("defaults = MinPanelSize %d, Border %d", props.MinPanelSize, props.Border)
 	}
 	mustPanic(t, func() { Grid(GridProps{Orientation: Orientation(2)}) })

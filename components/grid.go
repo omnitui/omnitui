@@ -41,9 +41,6 @@ func Grid(props GridProps, children ...omnitui.Element) omnitui.Element {
 	if props.MinPanelSize < 3 {
 		panic("omnitui/components: grid MinPanelSize must be at least 3")
 	}
-	if props.Border == BorderNone {
-		props.Border = BorderSingle
-	}
 	if props.Border > BorderHeavy {
 		panic("omnitui/components: invalid grid border")
 	}

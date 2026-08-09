@@ -77,6 +77,42 @@ func TestGridFlexGrowFillsParentAndStretchesPanels(t *testing.T) {
 	}
 }
 
+func TestGridBorderNoneKeepsInternalDividers(t *testing.T) {
+	panel := func(label string) core.Element {
+		return core.NewHost(core.HostBox, core.BoxData{}, []core.Element{
+			core.NewHost(core.HostText, core.TextData{Content: label}, nil),
+		})
+	}
+	root := core.NewHost(core.HostGrid, core.GridData{
+		Width:        core.CellsSize(11),
+		Height:       core.CellsSize(5),
+		Orientation:  0,
+		MinPanelSize: 3,
+		Border:       0,
+	}, []core.Element{panel("one"), panel("two")})
+	app := New(root, Options{})
+	app.width, app.height = 11, 5
+	if err := app.render(); err != nil {
+		t.Fatal(err)
+	}
+	if got := app.front.Cell(5, 2).Grapheme; got != "║" {
+		t.Fatalf("divider cell = %q, want ║", got)
+	}
+	if got := app.front.Cell(0, 0).Grapheme; got != "o" {
+		t.Fatalf("first panel cell = %q, want content", got)
+	}
+	if got := app.rootInstance.children[0].rect; got.X != 0 || got.Width != 6 {
+		t.Fatalf("first panel rect = %#v, want x=0 width=6", got)
+	}
+	if got := app.rootInstance.children[1].rect; got.X != 5 || got.Width != 6 {
+		t.Fatalf("second panel rect = %#v, want x=5 width=6", got)
+	}
+	app.dispatchMouse(MouseEvent{Action: MouseDown, Button: MouseButtonLeft, X: 5, Y: 2})
+	if !app.rootInstance.gridDragging {
+		t.Fatal("borderless grid did not capture its visible divider")
+	}
+}
+
 func TestGridDragResizesOnlyInternalBorders(t *testing.T) {
 	app := newGridTestApp(t, 0, 11, 5, 3)
 	grid := app.rootInstance

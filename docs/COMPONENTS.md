@@ -102,6 +102,8 @@ Set `FlexGrow: 1` when the grid should consume the remaining space in its parent
 
 `OrientationHorizontal` lays panels out from left to right and lets the user change their widths. `OrientationVertical` lays panels out from top to bottom and changes their heights. A resize starts only when the left mouse button is pressed on a border shared by two children. Moving the pointer changes that adjacent pair while preserving their combined size; releasing the button finishes the interaction. Outer borders and content never start a resize.
 
+`BorderNone` leaves panel content unbordered while keeping shared divider glyphs visible and draggable.
+
 Use `GridItem` around a child to define `InitialSize`, `MinSize`, and `MaxSize` in cells along the main axis. They control width in `OrientationHorizontal` and height in `OrientationVertical`; every value includes the panel's border cells. Zero keeps the automatic behavior: remaining initial space is shared, `MinPanelSize` supplies the minimum, and the maximum is unlimited. Plain children are equivalent to a `GridItem` with zero values.
 
 Mounted grids retain dragged sizes across ordinary parent renders and fit them to the per-item constraints after a resize. Initial sizes are reapplied only after mounting or when orientation or child count changes. If available space is smaller than the sum of minimums, the minimums are relaxed temporarily. If finite maximums prevent the panels from filling the grid, unused space remains after the final panel.

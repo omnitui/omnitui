@@ -13,7 +13,7 @@ func measureGrid(grid *instance, data core.GridData, maxWidth, maxHeight int) (i
 			childWidth = gridMeasuredTrackSize(data, index, childWidth)
 			width += childWidth
 			if index > 0 {
-				width--
+				width -= gridBorderOverlap(data)
 			}
 			height = maxInt(height, childHeight)
 		} else {
@@ -21,7 +21,7 @@ func measureGrid(grid *instance, data core.GridData, maxWidth, maxHeight int) (i
 			width = maxInt(width, childWidth)
 			height += childHeight
 			if index > 0 {
-				height--
+				height -= gridBorderOverlap(data)
 			}
 		}
 	}
@@ -52,7 +52,7 @@ func arrangeGrid(grid *instance, data core.GridData) {
 	if data.Orientation == 1 {
 		extent = grid.rect.Height
 	}
-	total := extent + count - 1
+	total := extent + gridBorderOverlap(data)*(count-1)
 	reset := len(grid.gridSizes) != count || grid.gridOrientation != data.Orientation
 	if reset {
 		grid.gridSizes = initialGridSizes(data, count, total)
@@ -79,8 +79,12 @@ func arrangeGrid(grid *instance, data core.GridData) {
 			panel.Height = size
 		}
 		arrangeNode(child, panel, clip, grid.style, nil)
-		cursor += maxInt(size-1, 0)
+		cursor += maxInt(size-gridBorderOverlap(data), 0)
 	}
+}
+
+func gridBorderOverlap(_ core.GridData) int {
+	return 1
 }
 
 func gridMeasuredTrackSize(data core.GridData, index, content int) int {

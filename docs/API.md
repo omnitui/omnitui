@@ -528,11 +528,11 @@ type GridItemProps struct {
 func GridItem(props GridItemProps, child omnitui.Element) omnitui.Element
 ```
 
-`Grid` places every child inside an automatically clipped, bordered `Box`. Adjacent boxes share one border cell. Every shared, draggable divider is drawn as a double line so it remains visually distinct from non-draggable outer borders. With `OrientationHorizontal`, dragging an internal border with the left mouse button changes the widths of the two adjacent panels; with `OrientationVertical`, it changes their heights. Outer borders and panel content do not start a resize.
+`Grid` places every child inside an automatically clipped `Box`; `BorderNone` removes the panel borders while shared internal dividers remain visible and draggable. Adjacent bordered boxes share one border cell. Every shared, draggable divider is drawn as a double line so it remains visually distinct from non-draggable outer borders. With `OrientationHorizontal`, dragging an internal border with the left mouse button changes the widths of the two adjacent panels; with `OrientationVertical`, it changes their heights. Outer borders and panel content do not start a resize.
 
 Wrap a child with `GridItem` to configure its main-axis size in terminal cells. `InitialSize` is used when the grid mounts or its orientation or child count changes. `MinSize` and `MaxSize` constrain layout and dragging. Zero means automatic initial size, the grid's `MinPanelSize`, and no maximum, respectively. A direct child without `GridItem` uses all three defaults.
 
-Sizes include border cells. Automatic items share the space left by explicit initial sizes. When the viewport cannot contain all minimums, the grid temporarily relaxes them to remain inside its rectangle. When every item reaches a finite maximum before filling the grid, the unused cells remain after the final panel. An omitted `Border` uses `BorderSingle`; a grid always has borders.
+Sizes include border cells. Automatic items share the space left by explicit initial sizes. When the viewport cannot contain all minimums, the grid temporarily relaxes them to remain inside its rectangle. When every item reaches a finite maximum before filling the grid, the unused cells remain after the final panel. `BorderNone` removes panel borders but preserves shared internal dividers; it is also the default.
 
 ### `Text`
 
