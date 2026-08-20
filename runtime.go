@@ -8,8 +8,6 @@ import (
 	uitext "github.com/omnitui/omnitui/v2/internal/text"
 )
 
-const unbounded = 1 << 29
-
 const tabHorizontalPadding = 1
 
 func (app *App) render() error {
@@ -1041,9 +1039,10 @@ func paintText(buffer *screen.Buffer, i *instance, value string, wrap, align uin
 		}
 		lineWidth := uitext.Width(line)
 		x := i.rect.X
-		if align == 1 {
+		switch align {
+		case 1:
 			x += maxInt(width-lineWidth, 0) / 2
-		} else if align == 2 {
+		case 2:
 			x += maxInt(width-lineWidth, 0)
 		}
 		paintGraphemes(buffer, x, i.rect.Y+row, line, style)
@@ -1142,14 +1141,7 @@ func paintList(buffer *screen.Buffer, i *instance, data core.ListData) {
 	for _, child := range i.children {
 		paintNode(buffer, child)
 	}
-	total := 0
-	for index, child := range i.children {
-		_, height := measureNode(child, i.rect.Width, i.rect.Height)
-		total += height
-		if index > 0 {
-			total += data.Gap
-		}
-	}
+	total := listContentHeight(i, data)
 	if data.Scrollbar != 2 && (data.Scrollbar == 1 || total > i.rect.Height) && i.rect.Width > 0 {
 		x := i.rect.X + i.rect.Width - 1
 		if data.Scrollbar == 1 || total > i.rect.Height {
@@ -1157,9 +1149,9 @@ func paintList(buffer *screen.Buffer, i *instance, data core.ListData) {
 				buffer.Set(x, row, "│", i.style)
 			}
 			if total > i.rect.Height {
-				thumb := maxInt(i.rect.Height*i.rect.Height/maxInt(total, 1), 1)
-				start := i.rect.Y + i.listOffset*maxInt(i.rect.Height-thumb, 0)/maxInt(total-i.rect.Height, 1)
-				for row := start; row < start+thumb; row++ {
+				metrics, _ := verticalScrollbar(i.rect.Height, total, i.listOffset)
+				start := i.rect.Y + metrics.thumbStart
+				for row := start; row < start+metrics.thumbSize; row++ {
 					buffer.Set(x, row, "█", i.style)
 				}
 			}

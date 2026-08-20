@@ -28,7 +28,7 @@ func (p probe) Render(_ Context, props probeProps, state probeState, children Ch
 
 func TestReconcilePreservesStateAndUpdatesProps(t *testing.T) {
 	initial, seen := 0, []string{}
-	typeValue := Define[probeProps, probeState]("Probe", probe{initial: &initial, seen: &seen})
+	typeValue := Define("Probe", probe{initial: &initial, seen: &seen})
 	app := New(Create(typeValue, probeProps{Value: "first"}), Options{Input: nil, Output: nil})
 	app.width, app.height = 20, 2
 	if err := app.render(); err != nil {
@@ -58,7 +58,7 @@ func (p contextProbe) Render(ctx Context, key ContextKey[int], _ struct{}, _ Chi
 func TestProviderScopeDoesNotLeakToSibling(t *testing.T) {
 	key := NewContext(7)
 	seen := []int{}
-	typeValue := Define[ContextKey[int], struct{}]("ContextProbe", contextProbe{seen: &seen})
+	typeValue := Define("ContextProbe", contextProbe{seen: &seen})
 	root := Fragment(Provide(key, 11, Create(typeValue, key)), Create(typeValue, key))
 	app := New(root, Options{})
 	app.width, app.height = 10, 2
@@ -79,7 +79,7 @@ func (renderUpdate) Render(ctx Context, _ int, _ int, _ Children) Element {
 }
 
 func TestStateUpdateDuringRenderPanics(t *testing.T) {
-	typeValue := Define[int, int]("RenderUpdate", renderUpdate{})
+	typeValue := Define("RenderUpdate", renderUpdate{})
 	app := New(Create(typeValue, 0), Options{})
 	app.width, app.height = 1, 1
 	defer func() {
@@ -190,6 +190,41 @@ func TestListScrollPaddingAtStartDoesNotShiftItems(t *testing.T) {
 	}
 	if got := app.rootInstance.children[0].rect.Y; got != 0 {
 		t.Fatalf("first item Y = %d, want 0", got)
+	}
+}
+
+func TestListScrollbarDragScrollsWithoutChangingSelection(t *testing.T) {
+	items := make([]Element, 10)
+	for index := range items {
+		items[index] = core.NewHost(core.HostText, core.TextData{Content: fmt.Sprintf("item%d", index)}, nil).WithKey(fmt.Sprintf("item-%d", index))
+	}
+	changes := 0
+	root := core.NewHost(core.HostList, core.ListData{
+		Height: core.CellsSize(4), Selectable: true, SelectedKey: "item-0", Scrollbar: 0,
+		Handlers: core.Handlers{"change": EventHandler[ValueChangeEvent](func(ValueChangeEvent) EventResult {
+			changes++
+			return Consume
+		})},
+	}, items)
+	app := New(root, Options{})
+	app.width, app.height = 5, 4
+	if err := app.render(); err != nil {
+		t.Fatal(err)
+	}
+	list := app.rootInstance
+
+	app.dispatchMouse(MouseEvent{Action: MouseDown, Button: MouseButtonLeft, X: 4, Y: 0})
+	app.dispatchMouse(MouseEvent{Action: MouseMove, Buttons: MouseLeftPressed, X: 8, Y: 20})
+	app.dispatchMouse(MouseEvent{Action: MouseUp, Button: MouseButtonLeft, X: 8, Y: 20})
+
+	if list.listOffset != 6 {
+		t.Fatalf("list offset after scrollbar drag = %d, want 6", list.listOffset)
+	}
+	if changes != 0 {
+		t.Fatalf("scrollbar drag proposed %d selection changes, want 0", changes)
+	}
+	if app.capture != nil {
+		t.Fatal("list kept mouse capture after scrollbar release")
 	}
 }
 

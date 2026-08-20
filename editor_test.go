@@ -265,6 +265,52 @@ func TestEditorScrollbarClickDoesNotMoveCursor(t *testing.T) {
 	}
 }
 
+func TestEditorScrollbarDragScrollsWithoutMovingCursor(t *testing.T) {
+	root := core.NewHost(core.HostEditor, core.EditorData{
+		Value: "0\n1\n2\n3\n4\n5\n6\n7\n8\n9", Width: core.CellsSize(5), Height: core.CellsSize(4), Scrollbar: 0,
+	}, nil)
+	app := New(root, Options{})
+	app.width, app.height = 5, 4
+	if err := app.render(); err != nil {
+		t.Fatal(err)
+	}
+	editor := app.rootInstance
+	editor.editorCursor = 1
+
+	app.dispatchMouse(MouseEvent{Action: MouseDown, Button: MouseButtonLeft, X: 4, Y: 0})
+	app.dispatchMouse(MouseEvent{Action: MouseMove, Buttons: MouseLeftPressed, X: 8, Y: 20})
+	app.dispatchMouse(MouseEvent{Action: MouseUp, Button: MouseButtonLeft, X: 8, Y: 20})
+
+	if editor.editorRowOffset != 6 {
+		t.Fatalf("row offset after scrollbar drag = %d, want 6", editor.editorRowOffset)
+	}
+	if editor.editorCursor != 1 {
+		t.Fatalf("cursor after scrollbar drag = %d, want 1", editor.editorCursor)
+	}
+	if app.capture != nil {
+		t.Fatal("editor kept mouse capture after scrollbar release")
+	}
+}
+
+func TestEditorScrollbarDragKeepsTheThumbGrabPoint(t *testing.T) {
+	root := core.NewHost(core.HostEditor, core.EditorData{
+		Value: "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11", Width: core.CellsSize(5), Height: core.CellsSize(6), Scrollbar: 0,
+	}, nil)
+	app := New(root, Options{})
+	app.width, app.height = 5, 6
+	if err := app.render(); err != nil {
+		t.Fatal(err)
+	}
+
+	app.dispatchMouse(MouseEvent{Action: MouseDown, Button: MouseButtonLeft, X: 4, Y: 2})
+	app.dispatchMouse(MouseEvent{Action: MouseMove, Buttons: MouseLeftPressed, X: 4, Y: 3})
+	app.dispatchMouse(MouseEvent{Action: MouseUp, Button: MouseButtonLeft, X: 4, Y: 3})
+
+	if got := app.rootInstance.editorRowOffset; got != 2 {
+		t.Fatalf("row offset after dragging from the thumb bottom = %d, want 2", got)
+	}
+}
+
 func editorInstance(value string, onChange EventHandler[ValueChangeEvent]) *instance {
 	handlers := core.Handlers{}
 	if onChange != nil {

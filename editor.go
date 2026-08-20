@@ -284,9 +284,9 @@ func paintEditorScrollbar(buffer *screen.Buffer, editor *instance, data core.Edi
 	if totalLines <= height {
 		return
 	}
-	thumb := maxInt(height*height/maxInt(totalLines, 1), 1)
-	start := editor.rect.Y + editor.editorRowOffset*maxInt(height-thumb, 0)/maxInt(totalLines-height, 1)
-	for row := start; row < start+thumb; row++ {
+	metrics, _ := verticalScrollbar(height, totalLines, editor.editorRowOffset)
+	start := editor.rect.Y + metrics.thumbStart
+	for row := start; row < start+metrics.thumbSize; row++ {
 		if editor.clip.Contains(x, row) {
 			buffer.Set(x, row, "█", editor.style)
 		}

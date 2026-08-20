@@ -211,3 +211,16 @@ func TestListWheelScrollsWithoutChangingSelection(t *testing.T) {
 		t.Fatal("wheel did not reveal the third item")
 	}
 }
+
+func TestListScrollbarDragScrollsThroughANSIMouseInput(t *testing.T) {
+	typeValue := omnitui.Define[string, listState]("DraggableListScreen", listComponent{})
+	var output bytes.Buffer
+	input := "\x1b[<0;80;1M\x1b[<32;80;2M\x1b[<0;80;2m\x03"
+	app := omnitui.New(omnitui.Create(typeValue, "list"), omnitui.Options{Input: strings.NewReader(input), Output: &output})
+	if err := app.Run(context.Background()); !errors.Is(err, omnitui.ErrInterrupted) {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if !strings.Contains(output.String(), "hree") {
+		t.Fatal("scrollbar drag did not reveal the third item")
+	}
+}

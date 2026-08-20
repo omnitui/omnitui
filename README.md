@@ -20,7 +20,7 @@ OmniTUI turns the interface into a tree of immutable elements. The runtime prese
 - **Terminal layout:** horizontal or vertical direction, sizing, padding, gap, alignment, wrapping, clipping, and borders.
 - **Resizable panels:** horizontal and vertical grids with per-panel initial, minimum, and maximum sizes plus mouse-draggable internal borders.
 - **Hierarchical navigation:** controlled tree views with selectable, collapsible nodes, keyboard navigation, scrolling, and mouse support.
-- **MVP interaction:** keyboard, text input, paste, focus, SGR mouse, wheel, resize, and external messages.
+- **MVP interaction:** keyboard, text input, paste, focus, SGR mouse, wheel, draggable scrollbars, resize, and external messages.
 - **Inherited styles:** ANSI 16/256 colors, true color, foreground, background, and attributes such as bold, underline, and dim.
 - **Text editing:** controlled single-line and multiline editors, cursor navigation, scrolling, vertical scrollbar, and callback-driven syntax highlighting.
 - **Unicode and incremental rendering:** visual grapheme width, double buffering, and cell diffs to reduce redraws.
@@ -137,6 +137,7 @@ Common controls:
 - arrow keys navigate `Dropdown`, `Tabs`, `List`, `TreeView`, `Input`, and `Editor`; left and right also collapse and expand tree nodes;
 - `Enter` inserts a line break in `Editor` and activates controls elsewhere; `Space` activates controls;
 - mouse and wheel work in compatible components;
+- dragging a visible scrollbar thumb scrolls `Editor`, `List`, `TreeView`, and open `Dropdown` menus;
 - dragging an internal `Grid` border resizes its adjacent panels;
 - `Ctrl+C` exits the application.
 

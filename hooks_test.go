@@ -27,7 +27,7 @@ func (duplicateEffectProbe) Render(ctx Context, _ struct{}, _ struct{}, _ Childr
 }
 
 func TestDuplicateHookKeyPanics(t *testing.T) {
-	typeValue := Define[struct{}, struct{}]("DuplicateEffectProbe", duplicateEffectProbe{})
+	typeValue := Define("DuplicateEffectProbe", duplicateEffectProbe{})
 	app := New(Create(typeValue, struct{}{}), Options{})
 	app.width, app.height = 1, 1
 	defer func() {
@@ -62,7 +62,7 @@ func (probe effectProbe) Render(ctx Context, props effectProps, _ struct{}, _ Ch
 
 func TestUseEffectLifecycle(t *testing.T) {
 	log := []string{}
-	typeValue := Define[effectProps, struct{}]("EffectProbe", effectProbe{log: &log})
+	typeValue := Define("EffectProbe", effectProbe{log: &log})
 	app := New(Create(typeValue, effectProps{Dependency: 1, Enabled: true}), Options{})
 	app.width, app.height = 10, 2
 	render := func(props effectProps) {
@@ -97,7 +97,7 @@ func TestUseEffectLifecycle(t *testing.T) {
 
 func TestEffectsCleanUpWhenRunReturns(t *testing.T) {
 	log := []string{}
-	typeValue := Define[effectProps, struct{}]("EffectProbe", effectProbe{log: &log})
+	typeValue := Define("EffectProbe", effectProbe{log: &log})
 	headlessBackend := headless.New(8, 2)
 	headlessBackend.Send(backend.KeyInput{Modifiers: 1})
 	app := newWithBackend(Create(typeValue, effectProps{Dependency: 1, Enabled: true}), Options{}, func() (backend.Backend, error) {
@@ -126,7 +126,7 @@ func (probe effectStateProbe) Render(ctx Context, _ struct{}, state int, _ Child
 
 func TestEffectStateUpdateSchedulesAnotherRender(t *testing.T) {
 	seen := []int{}
-	typeValue := Define[struct{}, int]("EffectStateProbe", effectStateProbe{seen: &seen})
+	typeValue := Define("EffectStateProbe", effectStateProbe{seen: &seen})
 	app := New(Create(typeValue, struct{}{}), Options{})
 	app.width, app.height = 1, 1
 	app.invalidated = true
@@ -171,7 +171,7 @@ func TestEffectCanUpdateStateDuringLaterRender(t *testing.T) {
 	release := make(chan struct{})
 	trigger := make(chan struct{})
 	result := make(chan any)
-	typeValue := Define[bool, int]("ConcurrentEffectProbe", concurrentEffectProbe{
+	typeValue := Define("ConcurrentEffectProbe", concurrentEffectProbe{
 		entered: entered,
 		release: release,
 		trigger: trigger,
@@ -212,7 +212,7 @@ func (probe refProbe) Render(ctx Context, initial int, _ struct{}, _ Children) E
 
 func TestUseRefPreservesValueWithoutRendering(t *testing.T) {
 	seen := []*Ref[int]{}
-	typeValue := Define[int, struct{}]("RefProbe", refProbe{seen: &seen})
+	typeValue := Define("RefProbe", refProbe{seen: &seen})
 	app := New(Create(typeValue, 1), Options{})
 	app.width, app.height = 1, 1
 	if err := app.render(); err != nil {
@@ -269,7 +269,7 @@ func (probe viewportProbe) Render(ctx Context, _ struct{}, _ struct{}, _ Childre
 
 func TestUseViewportTracksResize(t *testing.T) {
 	seen := []Viewport{}
-	typeValue := Define[struct{}, struct{}]("ViewportProbe", viewportProbe{seen: &seen})
+	typeValue := Define("ViewportProbe", viewportProbe{seen: &seen})
 	app := New(Create(typeValue, struct{}{}), Options{})
 	app.width, app.height = 80, 24
 	if err := app.render(); err != nil {
@@ -298,7 +298,7 @@ func (probe focusProbe) Render(ctx Context, _ struct{}, _ struct{}, _ Children) 
 
 func TestUseFocusRequestsAndReleasesFocus(t *testing.T) {
 	handles := []FocusHandle{}
-	typeValue := Define[struct{}, struct{}]("FocusProbe", focusProbe{handles: &handles})
+	typeValue := Define("FocusProbe", focusProbe{handles: &handles})
 	app := New(Create(typeValue, struct{}{}), Options{})
 	app.width, app.height = 10, 2
 	app.invalidated = true

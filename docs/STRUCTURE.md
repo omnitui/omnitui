@@ -233,6 +233,7 @@ The root package does not export visual components. In particular, there are no 
 | `dispatch.go` | Serialized queue for state, messages, resize, and input |
 | `focus.go` | Focus order, targets, and recovery after unmount |
 | `mouse.go` | Hover path, capture, button state, and default behavior |
+| `scrollbar.go` | Shared vertical scrollbar geometry and thumb dragging for scrollable hosts |
 | `grid.go` | Grid measurement, shared-border layout, and divider dragging |
 | `hit_testing.go` | Target lookup by position, clipping, and paint order |
 | `runtime.go` | Main loop and phase coordination |

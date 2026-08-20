@@ -396,6 +396,9 @@ func (app *App) dispatchMouse(event MouseEvent) {
 			dispatchEvent(app.pressTarget, "press", PressEvent{Source: MouseLeft})
 		}
 		if app.capture != nil && event.Button == MouseButtonLeft {
+			if consumed {
+				app.capture.scrollbarDragging = false
+			}
 			app.capture = nil
 			app.pressTarget = nil
 		}
@@ -429,6 +432,11 @@ func (app *App) positionInputCursor(input *instance, x int) {
 }
 
 func (app *App) defaultMouse(target *instance, event MouseEvent) bool {
+	for current := target; current != nil; current = current.parent {
+		if (current.hostKind() == core.HostEditor || current.hostKind() == core.HostList) && app.scrollbarMouse(current, event) {
+			return true
+		}
+	}
 	if grid := ancestorHost(target, core.HostGrid); grid != nil && app.gridMouse(grid, event) {
 		return true
 	}
@@ -510,14 +518,7 @@ func (app *App) scrollList(list *instance, delta int) {
 	if !ok {
 		return
 	}
-	total := 0
-	for index, child := range list.children {
-		_, height := measureNode(child, list.rect.Width, list.rect.Height)
-		total += height
-		if index > 0 {
-			total += data.Gap
-		}
-	}
+	total := listContentHeight(list, data)
 	maxOffset := maxInt(total-list.rect.Height, 0)
 	next := clamp(list.listOffset+delta, maxOffset*-1, maxOffset)
 	if next == list.listOffset {

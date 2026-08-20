@@ -216,7 +216,7 @@ Unicode requires handling visual width, combining characters, and continuation c
 
 The `omnitui/components` package provides `Row`, `Column`, `Grid`, `Text`, `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and `TreeView` as official builtins. Their contracts, props, behavior, and usage examples are in [COMPONENTS.md](COMPONENTS.md).
 
-`Box` and `Button` remain in the same package as lower-level visual building blocks; `Fragment` and `None` belong to the `omnitui` core. `Box` and `Text` create hosts through the opaque `internal/core` boundary; the other builtins use the same `Component` API available to users. `Input` and `Editor` use unexported internal hosts for cursor, editing, and viewport state. `Grid` uses an unexported host because layout, per-item size constraints, and pointer capture need the actual panel rectangles to resize adjacent tracks in terminal cells. `Dropdown` uses an unexported overlay host that contributes zero height to normal layout, anchors its menu after the trigger, paints it after the regular tree, and gives it hit-testing priority over covered content. `TreeView` flattens its expanded node hierarchy into keyed `List` rows, reusing the established selection, focus, and scrolling behavior; an internal line host paints connectors, disclosure indicators, row background, and label style independently.
+`Box` and `Button` remain in the same package as lower-level visual building blocks; `Fragment` and `None` belong to the `omnitui` core. `Box` and `Text` create hosts through the opaque `internal/core` boundary; the other builtins use the same `Component` API available to users. `Input` and `Editor` use unexported internal hosts for cursor, editing, and viewport state. `Editor` and `List` share scrollbar geometry and thumb-drag behavior; `TreeView` and open `Dropdown` menus inherit it through `List`. `Grid` uses an unexported host because layout, per-item size constraints, and pointer capture need the actual panel rectangles to resize adjacent tracks in terminal cells. `Dropdown` uses an unexported overlay host that contributes zero height to normal layout, anchors its menu after the trigger, paints it after the regular tree, and gives it hit-testing priority over covered content. `TreeView` flattens its expanded node hierarchy into keyed `List` rows, reusing the established selection, focus, and scrolling behavior; an internal line host paints connectors, disclosure indicators, row background, and label style independently.
 
 ### 8.2 Layout engine
 
@@ -341,7 +341,7 @@ The core must be testable without a real terminal.
 - `Tabs` validates keys, ignores disabled tabs, and accepts selection by keyboard or click.
 - `List` requires keys, preserves keyed selection, and keeps the selected item visible.
 - `List` scrolling clamps offsets, preserves its anchor during reordering, and works with items of different heights.
-- wheel input moves `Editor` and `List` viewports without changing their controlled values.
+- wheel input and scrollbar-thumb dragging move `Editor` and `List` viewports without changing their controlled values.
 
 ### Headless integration
 
@@ -354,11 +354,11 @@ A `TestBackend` receives synthetic events and captures frames:
 5. reorder keyed components;
 6. confirm that their state followed the keys;
 7. edit and submit a controlled `Input`;
-8. edit, navigate, highlight, click, and scroll a controlled multiline `Editor`;
+8. edit, navigate, highlight, click, wheel-scroll, and drag the scrollbar of a controlled multiline `Editor`;
 9. drag horizontal and vertical `Grid` dividers and verify adjacent sizes and minimums;
 10. navigate `Tabs`, `List`, and `TreeView` items by keyboard, including tree expansion and collapse;
 11. click `Button`, `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and `TreeView` with synthetic coordinates;
-12. scroll a `List` and `TreeView` by wheel and inspect offset, clipping, and selection;
+12. scroll a `List` and `TreeView` by wheel and scrollbar drag, then inspect offset, clipping, and selection;
 13. cancel and verify backend shutdown.
 
 ### Real terminal
@@ -432,10 +432,10 @@ Completion criterion: keyboard and mouse interaction is deterministic, events re
 Deliverables:
 
 - controlled `Input`, cursor, editing, paste, submit, and click positioning;
-- controlled multiline `Editor`, two-axis viewport, vertical scrollbar, mouse positioning, and syntax-highlight spans;
+- controlled multiline `Editor`, two-axis viewport, draggable vertical scrollbar, mouse positioning, and syntax-highlight spans;
 - resizable `Grid` panels, shared borders, pointer capture, and horizontal/vertical layout;
 - controlled `Tabs`, header navigation, clicks, and active panel;
-- controlled `List`, viewport, navigation, clicks, activation, scrollbar, wheel, and automatic scrolling;
+- controlled `List`, viewport, navigation, clicks, activation, draggable scrollbar, wheel, and automatic scrolling;
 - controlled `TreeView`, hierarchical connectors, expansion, node selection, scrolling, and activation;
 - `ValueChangeEvent`, `SubmitEvent`, and `ActivateEvent`;
 - documentation and composition examples for all builtins.
@@ -459,7 +459,7 @@ Completion criterion: the minimal API is stable and bottlenecks are known from b
 - render concorrente;
 - public memoization;
 - public portals and arbitrary overlays outside the normal tree;
-- double-click, semantic drag, scrollbar dragging, direct clipboard access, and IME;
+- double-click, general semantic drag, direct clipboard access, and IME;
 - list virtualization;
 - animations and timers;
 - custom markup or DSL.
@@ -480,7 +480,7 @@ The MVP is ready when tests and an executable example can demonstrate that:
 8. the terminal is restored on every exit path;
 9. `go test -race ./...` passes;
 10. `Row`, `Column`, `Grid`, `Text`, `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and `TreeView` are exported exclusively by `omnitui/components`;
-11. SGR mouse, hit testing, capture, click press, and wheel work in the real and headless backends;
+11. SGR mouse, hit testing, capture, click press, wheel, and scrollbar dragging work in the real and headless backends;
 12. the `Counter` example API remains small and understandable.
 
 These criteria define the release boundary. Features that do not directly help meet them should wait until the first end-to-end version works.

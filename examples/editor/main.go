@@ -77,7 +77,7 @@ func (editorExample) Render(ctx omnitui.Context, _ string, state editorState, _ 
 			Style:     surfaceStyle,
 		},
 		components.Text(components.TextProps{
-			Content: "Type to edit • arrows/Home/End navigate • mouse and wheel scroll",
+			Content: "Type to edit • arrows/Home/End navigate • wheel or scrollbar drag scrolls",
 			Style:   omnitui.Style{Foreground: omnitui.ANSI(omnitui.BrightCyan)},
 		}),
 		components.Editor(components.EditorProps{

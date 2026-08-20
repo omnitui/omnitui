@@ -1,8 +1,6 @@
 package omnitui
 
 import (
-	"fmt"
-
 	"github.com/omnitui/omnitui/v2/internal/core"
 )
 
@@ -38,6 +36,8 @@ type instance struct {
 	editorGoalSet       bool
 	editorManualScroll  bool
 	editorLastValue     string
+	scrollbarDragging   bool
+	scrollbarDragGrab   int
 	gridSizes           []int
 	gridExtent          int
 	gridOrientation     uint8
@@ -158,16 +158,3 @@ func instanceIdentity(old *instance, element Element) bool {
 }
 
 func (i *instance) elementProviderKey() uint64 { return core.ProviderOf(i.element).KeyID }
-
-func (i *instance) describe() string {
-	if i == nil {
-		return "<nil>"
-	}
-	if i.def != nil && i.def.Name != "" {
-		return i.def.Name
-	}
-	if i.kind() == core.KindHost {
-		return fmt.Sprintf("host(%d)", i.host.Kind)
-	}
-	return fmt.Sprintf("element(%d)", i.kind())
-}

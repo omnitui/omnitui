@@ -103,7 +103,7 @@ func (treeViewExample) Render(ctx omnitui.Context, _ struct{}, state treeViewSta
 			},
 		}),
 		components.Text(components.TextProps{Content: "Selected: " + state.Selected}),
-		components.Text(components.TextProps{Content: "↑/↓ select • ←/→ or triangles collapse/expand • Ctrl+C exits"}),
+		components.Text(components.TextProps{Content: "↑/↓ select • ←/→ or triangles collapse/expand • drag scrollbar • Ctrl+C exits"}),
 	)
 }
 

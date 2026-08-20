@@ -266,9 +266,10 @@ func paintGrid(buffer *screen.Buffer, grid *instance, data core.GridData) {
 		if data.Orientation == 0 {
 			for row := 0; row < grid.rect.Height; row++ {
 				glyph := glyphs[1]
-				if row == 0 {
+				switch row {
+				case 0:
 					glyph = glyphs[0]
-				} else if row == grid.rect.Height-1 {
+				case grid.rect.Height - 1:
 					glyph = glyphs[2]
 				}
 				setGridCell(buffer, grid, grid.rect.X+cursor, grid.rect.Y+row, glyph)
@@ -276,9 +277,10 @@ func paintGrid(buffer *screen.Buffer, grid *instance, data core.GridData) {
 		} else {
 			for column := 0; column < grid.rect.Width; column++ {
 				glyph := glyphs[1]
-				if column == 0 {
+				switch column {
+				case 0:
 					glyph = glyphs[0]
-				} else if column == grid.rect.Width-1 {
+				case grid.rect.Width - 1:
 					glyph = glyphs[2]
 				}
 				setGridCell(buffer, grid, grid.rect.X+column, grid.rect.Y+cursor, glyph)

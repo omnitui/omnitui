@@ -649,7 +649,7 @@ func Editor(props EditorProps) omnitui.Element
 
 `ReadOnly` blocks all default mutations and therefore emits no `OnChange` proposal, but the editor remains focusable. Keyboard navigation, mouse cursor positioning, scrolling, focus styles, and cursor painting continue to work. `Disabled` is different: it removes the editor from focus and interaction.
 
-`ScrollbarAuto` reserves the last editor column and displays a vertical track and thumb only when the document has more lines than the viewport. `ScrollbarAlways` always reserves and paints the track; `ScrollbarHidden` preserves scrolling without drawing an indicator. The scrollbar is informational and is not itself draggable.
+`ScrollbarAuto` reserves the last editor column and displays a vertical track and thumb only when the document has more lines than the viewport. `ScrollbarAlways` always reserves and paints the track; `ScrollbarHidden` preserves scrolling without drawing an indicator. When the document overflows, dragging the visible thumb with the left mouse button updates the vertical viewport without moving the cursor.
 
 `Highlighter` runs once per logical line during component rendering. It returns half-open `[Start, End)` ranges measured in graphemes, not bytes or runes. Spans are resolved over `Style` and `FocusStyle` in return order, so later overlapping spans take precedence. Invalid ranges and conflicting styles are props errors. The framework does not bundle a language parser; applications may use a lexer or provide a lightweight callback such as the executable [editor example](../examples/editor/main.go).
 
@@ -682,7 +682,7 @@ type DropdownProps struct {
 func Dropdown(props DropdownProps) omnitui.Element
 ```
 
-`Dropdown` is controlled by `SelectedKey`. `Enter`, `Space`, `Up`, or `Down` opens the menu; arrows, `Home`, and `End` move the active option; `Enter` or a complete left click proposes a selection through `OnChange`; `Escape` closes the menu. The menu is rendered over the content below it, so opening it does not move following siblings. Keys must be unique, and a disabled option cannot be selected.
+`Dropdown` is controlled by `SelectedKey`. `Enter`, `Space`, `Up`, or `Down` opens the menu; arrows, `Home`, and `End` move the active option; `Enter` or a complete left click proposes a selection through `OnChange`; `Escape` closes the menu. The menu is rendered over the content below it, so opening it does not move following siblings. When it overflows, wheel input and dragging its scrollbar thumb move the menu viewport. Keys must be unique, and a disabled option cannot be selected.
 
 ### `Tabs`
 
@@ -736,7 +736,7 @@ type ListProps struct {
 func List(props ListProps, items ...omnitui.Element) omnitui.Element
 ```
 
-Every direct item must have `WithKey`. `List` is controlled by `SelectedKey`; a left click proposes the item and wheel input moves only the viewport. Detailed scrolling and navigation are in [COMPONENTS.md](COMPONENTS.md#scrolling).
+Every direct item must have `WithKey`. `List` is controlled by `SelectedKey`; a left click proposes the item, while wheel input and dragging the visible scrollbar thumb move only the viewport. Detailed scrolling and navigation are in [COMPONENTS.md](COMPONENTS.md#scrolling).
 
 ### `TreeView`
 
@@ -776,7 +776,7 @@ type TreeViewProps struct {
 func TreeView(props TreeViewProps) omnitui.Element
 ```
 
-`TreeView` renders visible nodes in depth-first order with Unicode branch connectors and `▾`/`▸` expansion indicators. Leaf labels begin immediately after their connector and do not reserve blank indicator cells. Node keys must be non-empty and unique across the complete tree. `SelectedKey` and `ExpandedKeys` are controlled; `OnChange` and `OnToggle` propose their updates. A nil `ExpandedKeys` preserves compatibility by expanding every branch, while a non-nil empty slice collapses all branches. `SelectedStyle.Background` fills the selected row; its foreground and attributes apply only to the node label. Left/right arrows and indicator clicks collapse or expand branches. Keyboard navigation, mouse selection, scrolling, activation, and focus otherwise follow `List`.
+`TreeView` renders visible nodes in depth-first order with Unicode branch connectors and `▾`/`▸` expansion indicators. Leaf labels begin immediately after their connector and do not reserve blank indicator cells. Node keys must be non-empty and unique across the complete tree. `SelectedKey` and `ExpandedKeys` are controlled; `OnChange` and `OnToggle` propose their updates. A nil `ExpandedKeys` preserves compatibility by expanding every branch, while a non-nil empty slice collapses all branches. `SelectedStyle.Background` fills the selected row; its foreground and attributes apply only to the node label. Left/right arrows and indicator clicks collapse or expand branches. Keyboard navigation, mouse selection, wheel and scrollbar-thumb scrolling, activation, and focus otherwise follow `List`.
 
 ## 10. Events — `omnitui`
 
@@ -988,9 +988,10 @@ Unconsumed default behavior:
 - a left down followed by an up still inside the same pressable control generates `PressEvent{Source: MouseLeft}`;
 - a click on a `Tabs` header proposes its key through `ValueChangeEvent`;
 - a click on a `List` item proposes its selection;
+- dragging the visible scrollbar thumb of an `Editor` or `List` moves its viewport without changing the controlled value;
 - wheel input over a `List` moves the viewport without changing `SelectedKey`.
 
-The MVP enables the SGR extended mouse protocol and motion tracking. Double-click, triple-click, semantic drag, drag selection, and scrollbar manipulation are outside the MVP; applications may still interpret the raw down/move/up sequence.
+The MVP enables the SGR extended mouse protocol and motion tracking. Double-click, triple-click, general semantic drag, and drag selection are outside the MVP; applications may still interpret the raw down/move/up sequence.
 
 ### Text and paste
 

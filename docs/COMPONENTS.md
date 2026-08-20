@@ -207,7 +207,7 @@ Printable input, paste, `Enter`, Backspace, and Delete edit the document. Arrow 
 
 With `ReadOnly: true`, insertion, paste, Enter, Backspace, and Delete do not propose a new value. The editor still receives focus, paints its cursor, accepts mouse positioning, navigates with the keyboard, and scrolls normally. Use `Disabled` when the control must not receive focus or interaction at all.
 
-The vertical `Scrollbar` uses the shared modes also accepted by `List`: `ScrollbarAuto` appears only when the document overflows, `ScrollbarAlways` always reserves the last column, and `ScrollbarHidden` draws nothing. The visible bar reserves its column so highlighted text and the cursor are never painted underneath it. The thumb follows keyboard and wheel scrolling; dragging the scrollbar itself is outside the initial scope.
+The vertical `Scrollbar` uses the shared modes also accepted by `List`: `ScrollbarAuto` appears only when the document overflows, `ScrollbarAlways` always reserves the last column, and `ScrollbarHidden` draws nothing. The visible bar reserves its column so highlighted text and the cursor are never painted underneath it. The thumb follows keyboard and wheel scrolling and can be dragged with the left mouse button without moving the cursor.
 
 ### Syntax highlighting
 
@@ -254,7 +254,7 @@ Displays the selected option as a compact control and opens a layered menu when 
 
 Signature and props: [API.md — `Dropdown`](API.md#dropdown).
 
-Keys must be unique and stable. Disabled options remain visible but are skipped by keyboard navigation and cannot be activated. `MenuHeight` bounds the list viewport and enables its scrollbar when necessary. The overlay is clipped to the available terminal area. `Wrap` allows navigation to continue at the opposite edge.
+Keys must be unique and stable. Disabled options remain visible but are skipped by keyboard navigation and cannot be activated. `MenuHeight` bounds the list viewport and enables its scrollbar when necessary; an overflowing menu inherits wheel and scrollbar-thumb scrolling from `List`. The overlay is clipped to the available terminal area. `Wrap` allows navigation to continue at the opposite edge.
 
 ### Example
 
@@ -348,6 +348,7 @@ The offset is measured in **terminal rows**, not indexes. This supports multi-li
 - `ScrollbarAuto` occupies a column only when overflow exists.
 - `ScrollbarAlways` reserves a column even when all content fits.
 - `ScrollbarHidden` keeps scrolling enabled but does not draw the indicator.
+- A visible thumb can be dragged with the left mouse button. Mouse capture keeps the drag active outside the viewport until release, without changing `SelectedKey`.
 - `ScrollPadding` attempts to keep this number of free rows above and below the selected item. The constraint is relaxed at the edges or when the item is taller than the viewport.
 
 #### Navigation and automatic scrolling
@@ -372,7 +373,7 @@ When selection changes, an item is considered visible when its entire rectangle 
 - Resize recalculates the viewport and clamps the offset to the new range. If the selection was visible before resize, it remains visible; a selection already moved away by wheel input does not snap automatically.
 - An empty list resets the offset and renders `Empty` without a scrollbar.
 
-All children are reconciled and measured in the MVP, including those outside the viewport; only painting is clipped. Virtualization is deferred until benchmarks and a specific API for on-demand items exist. Wheel input is part of the MVP; scrollbar dragging and inertia remain deferred.
+All children are reconciled and measured in the MVP, including those outside the viewport; only painting is clipped. Virtualization and scroll inertia are deferred until benchmarks and concrete use cases justify them.
 
 ### Example
 
@@ -426,7 +427,7 @@ Signature and props: [API.md — `TreeView`](API.md#treeview).
 
 Every node must have a non-empty key that is unique across the entire tree. `SelectedKey` is controlled: keyboard navigation or a left click proposes a new key through `OnChange`, and the parent accepts it by rendering that key back. Expansion is also controlled: `ExpandedKeys` contains open branches and `OnToggle` proposes a key with its next state. Nil expands all branches for compatibility; a non-nil empty slice collapses all of them.
 
-`SelectedStyle.Background` fills the complete selected row. Its foreground and attributes affect only the label, leaving connectors and indicators legible over that background. Left/right arrows collapse or expand the selected branch and move between parent and first child. Clicking `▾` or `▸` toggles that branch. `Enter` still emits `OnActivate`. The component reuses `List` semantics for focus, wrapping, scroll padding, wheel input, scrollbar modes, and programmatic focus.
+`SelectedStyle.Background` fills the complete selected row. Its foreground and attributes affect only the label, leaving connectors and indicators legible over that background. Left/right arrows collapse or expand the selected branch and move between parent and first child. Clicking `▾` or `▸` toggles that branch. `Enter` still emits `OnActivate`. The component reuses `List` semantics for focus, wrapping, scroll padding, wheel input, scrollbar dragging, scrollbar modes, and programmatic focus.
 
 Visible nodes are rendered in depth-first order. Collapsing a branch removes its descendants from layout and navigation until it is expanded again. Labels occupy one terminal row and use ellipsis when the available width is too small. `Empty` is rendered when `Nodes` is empty.
 
@@ -527,6 +528,6 @@ The handle keeps the same binding while its component instance and hook key are 
 11. `List` reveals an item after selection changes and preserves its visibility during resize when it was already visible.
 12. `List` correctly clamps its offset with variable-height items, a small viewport, and an empty list.
 13. `TreeView` preserves hierarchy connectors, controls visible branches through `ExpandedKeys`, and proposes selection and expansion without owning either value.
-14. `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and `TreeView` respond to clicks; `Grid` responds to internal-border drags; `Editor`, `List`, and `TreeView` respond to wheel input without changing their controlled values.
+14. `Input`, `Editor`, `Dropdown`, `Tabs`, `List`, and `TreeView` respond to clicks; `Grid` responds to internal-border drags; `Editor`, `List`, `TreeView`, and open `Dropdown` menus support wheel input and draggable scrollbars without changing their controlled values.
 15. All events follow the ordering and propagation defined in [API.md](API.md).
 16. All work with the headless backend and have examples compiled as tests.
