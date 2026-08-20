@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.0](https://github.com/omnitui/omnitui/compare/v2.4.1...v2.5.0) (2026-08-20)
+
+
+### Features
+
+* add draggable scrollbars to Editor and List components ([e3c51c3](https://github.com/omnitui/omnitui/commit/e3c51c32151e70794ffd57e06323b746ce319231))
+
 ## [2.4.1](https://github.com/omnitui/omnitui/compare/v2.4.0...v2.4.1) (2026-08-09)
 
 
